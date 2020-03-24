@@ -1,6 +1,7 @@
 # Based on https://github.com/huggingface/transformers/blob/master/src/transformers/modeling_bert.py
 
 import torch
+import math
 from torch import nn
 from torch.nn import CrossEntropyLoss, MSELoss
 
@@ -167,9 +168,9 @@ class MiniBertOutput(nn.Module):
 
 
 class MiniBertLayer(nn.Module):
-    def __init__(self, hidden_size, intermediate_size, config):
+    def __init__(self, hidden_size, intermediate_size, num_attention_heads, config):
         super().__init__()
-        self.attention = MiniBertAttention(config)
+        self.attention = MiniBertAttention(hidden_size, num_attention_heads, config)
         self.intermediate = MiniBertIntermediate(hidden_size, intermediate_size, config)
         self.output = MiniBertOutput(hidden_size, intermediate_size, config)
 
@@ -177,9 +178,7 @@ class MiniBertLayer(nn.Module):
         self,
         hidden_states,
         attention_mask=None,
-        head_mask=None,
-        encoder_hidden_states=None,
-        encoder_attention_mask=None,
+        head_mask=None
     ):
         self_attention_outputs = self.attention(hidden_states, attention_mask, head_mask)
         attention_output = self_attention_outputs[0]
@@ -192,11 +191,12 @@ class MiniBertLayer(nn.Module):
 
 
 class MiniBertEncoder(nn.Module):
-    def __init__(self, hidden_size, intermediate_size, num_hidden_layers, config):
+    def __init__(self, hidden_size, intermediate_size, num_hidden_layers, num_attention_heads, config):
         super().__init__()
         self.output_attentions = config.output_attentions
         self.output_hidden_states = config.output_hidden_states
-        self.layer = nn.ModuleList([MiniBertLayer(config) for _ in range(num_hidden_layers)])
+        self.layer = nn.ModuleList([MiniBertLayer(hidden_size, intermediate_size, \
+            num_attention_heads, config) for _ in range(num_hidden_layers)])
 
     def forward(
         self,
@@ -208,12 +208,13 @@ class MiniBertEncoder(nn.Module):
     ):
         all_hidden_states = ()
         all_attentions = ()
+        
         for i, layer_module in enumerate(self.layer):
             if self.output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
 
             layer_outputs = layer_module(
-                hidden_states, attention_mask, head_mask[i], encoder_hidden_states, encoder_attention_mask
+                hidden_states
             )
             hidden_states = layer_outputs[0]
 
@@ -230,3 +231,15 @@ class MiniBertEncoder(nn.Module):
         if self.output_attentions:
             outputs = outputs + (all_attentions,)
         return outputs  # last-layer hidden state, (all hidden states), (all attentions)
+
+class MiniBertConfig(object):
+    output_attentions=False
+    output_hidden_states=False
+    hidden_size=256
+    num_hidden_layers=6
+    num_attention_heads=2
+    intermediate_size=2048
+    hidden_dropout_prob=0.1
+    attention_probs_dropout_prob=0.1
+    max_position_embeddings=128
+    layer_norm_eps=1e-12

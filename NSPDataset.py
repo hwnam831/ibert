@@ -62,7 +62,7 @@ def num2vec(num, ndigits, lendian=True):
     return np.array(digits)
 
 class NSPDataset(Dataset):
-    def __init__(self, rule, maxdigits, mindigits=1, numbers=2, size=25600, lendian=True):
+    def __init__(self, rule, maxdigits, mindigits=1, numbers=2, size=25600, lendian=False):
         self.rule = rule
         assert maxdigits > mindigits
         self.maxdigits = maxdigits
@@ -109,6 +109,43 @@ class NSPDataset(Dataset):
             
             self.iscreated[idx] = True
         return self.inputs[idx], self.targets[idx]
+
+#Seq2Seq version + no one-hot encoding
+class NSPDataset2(Dataset):
+    def __init__(self, rule, maxdigits, mindigits=1, numbers=2, size=25600, lendian=False):
+        self.rule = rule
+        assert maxdigits > mindigits
+        self.maxdigits = maxdigits
+        self.mindigits = mindigits
+        self.size = size
+        self.lendian = lendian
+        self.numbers = numbers
+        self.maxlen = (maxdigits+1)*numbers + 1
+        self.inputs = np.ones([size, self.maxlen], dtype=np.int64)*Token.pad
+        self.targets = np.ones([size, self.maxdigits], dtype=np.int64)*Token.pad
+        self.iscreated = [False for i in range(size)]
+
+    def __len__(self):
+        return self.size
+
+    def __getitem__(self, idx):
+        if not self.iscreated[idx]:
+            ndigits = np.random.randint(self.mindigits, self.maxdigits+1)
+            seed1 = np.random.randint(10**(ndigits-1), 10**ndigits)
+            seed2 = np.random.randint(10**(ndigits-1), 10**ndigits)
+            seq, target = self.rule(seed1, seed2, self.numbers)
+            pos = 1
+            self.inputs[idx][0] = Token.delim
+            
+            for i in range(self.numbers):
+                vec = num2vec(seq[i], ndigits, self.lendian)
+                self.inputs[idx][pos:pos+ndigits] = vec
+                self.inputs[idx][pos+ndigits] = Token.delim
+                pos = pos + ndigits + 1
+
+            self.targets[idx][:ndigits] = num2vec(target, ndigits, self.lendian)            
+            self.iscreated[idx] = True
+        return self.inputs[idx], self.targets[idx]
 def printseq(x,y):
     tokenmap = ['0','1','2','3','4','5','6','7','8','9','_',' ','S','E','M','C']
     print("input:")
@@ -116,11 +153,18 @@ def printseq(x,y):
     print('\t' + ' '.join([tokenmap[n] for n in xseq]))
     print("target:")
     print('\t' + ' '.join([tokenmap[n] for n in y]))
+
+def printseq2(x,y):
+    tokenmap = ['0','1','2','3','4','5','6','7','8','9','_',' ','S','E','M','C']
+    print("input:")
+    print('\t' + ' '.join([tokenmap[n] for n in x]))
+    print("target:")
+    print('\t' + ' '.join([tokenmap[n] for n in y]))
 if __name__ == '__main__':
-    dataset = NSPDataset(fib,5,numbers=3)
+    dataset = NSPDataset2(fib,5)
     loader = DataLoader(dataset, batch_size=4)
     for i in range(10):
         x,y = dataset.__getitem__(i)
-        printseq(x,y)
+        printseq2(x,y)
         #print(np.argmax(x,-1))
         #print(y)
