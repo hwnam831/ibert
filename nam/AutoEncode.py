@@ -3,17 +3,18 @@ import torch.nn as nn
 import numpy as np
 import argparse
 import Models
-from NSPDataset import NSPDatasetS2S, Token, fib
+from NSPDataset import NSPDatasetAE, Token, fib
 from torch.utils.data import Dataset, DataLoader
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser(description="Number sequence training benchmark")
     parser.add_argument(
             "--net",
             type=str,
-            choices=['tf', 'lstm', 'gru'],
+            choices=['cnn', 'tf', 'minibert', 'lstm', 'gru'],
             default='tf',
-            help='tf | minibert | lstm | gru')
+            help='cnn | tf | minibert | lstm | gru')
     parser.add_argument(
             "--epochs",
             type=int,
@@ -52,21 +53,22 @@ if __name__ == '__main__':
             help='fib: fibonacci / arith: arithmetic / palin: palindrome')
     args = parser.parse_args()
 
-    if args.net == 'tf':
-        model = Models.TfS2S(args.model_size).cuda()
-    else:
-        model = Models.TfS2S(args.model_size).cuda()
-    dataset = NSPDatasetS2S(fib, args.digits, size=args.train_size)
-    valset = NSPDatasetS2S(fib, args.digits+1, args.digits-1, size=args.validation_size)
+    if args.net == 'minibert':
+        model = Models.MiniBertAE(args.model_size).cuda()
+    elif args.net == 'cnn':
+        model = Models.CNNAutoEncoder(args.model_size).cuda()
+    else :
+        model = Models.TfAE(args.model_size).cuda()
+    dataset = NSPDatasetAE(fib, args.digits, size=args.train_size)
+    valset = NSPDatasetAE(fib, args.digits+1, args.digits-1, size=args.validation_size)
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     valloader = DataLoader(valset, batch_size=args.batch_size, shuffle=True, num_workers=2)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=1.05)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=1.002)
     criterion = nn.CrossEntropyLoss()
 
     epoch = args.epochs
-    for e in range(15):
+    for e in range(20):
         print('\nEpoch #{}:'.format(e+1))
         model.train(mode=True)
         tcorrect = 0
@@ -75,23 +77,22 @@ if __name__ == '__main__':
         for x,y in trainloader:
             xdata = x.cuda()
             ydata = y.cuda()
-            tgt = torch.ones_like(ydata)*Token.start
-            tgt[:,1:] = ydata[:,:-1]
             optimizer.zero_grad()
-            output = model(xdata, tgt)
+            output = model(xdata)
             loss = criterion(output, ydata)
             loss.backward()
-            tloss = tloss + loss.item()
-            nn.utils.clip_grad_norm_(model.parameters(), 0.1)
+            nn.utils.clip_grad_norm_(model.parameters(), 0.5)
             optimizer.step()
             pred = output.argmax(axis=1)
             seqcorrect = (pred==ydata).prod(-1)
             tcorrect = tcorrect + seqcorrect.sum().item()
             tlen = tlen + seqcorrect.nelement()
-        scheduler.step()
+            tloss = tloss + loss.item()
+            #scheduler.step()
         print('train seq acc:\t'+str(tcorrect/tlen))
         print('train loss:\t{}'.format(tloss/len(trainloader)))
         print('Current LR:' + str(scheduler.get_lr()[0]))
+        
 
         model.train(mode=False)
         vcorrect = 0
@@ -99,19 +100,17 @@ if __name__ == '__main__':
         for x,y in valloader:
             xdata = x.cuda()
             ydata2 = y.cuda()
-            tgt = torch.ones_like(ydata2)*Token.start
-            tgt[:,1:] = ydata2[:,:-1]
-            output = model(xdata, tgt)
+            output = model(xdata)
             loss = criterion(output, ydata2)
             pred2 = output.argmax(axis=1)
             seqcorrect = (pred2==ydata2).prod(-1)
             vcorrect = vcorrect + seqcorrect.sum().item()
             vlen = vlen + seqcorrect.nelement()
         print("val accuracy = "+str(vcorrect/vlen))
-        #scheduler.step()
-        if tcorrect/tlen > 0.5:
+        if tcorrect/tlen > 0.3:
             break
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.96)
+
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.97)
     for e in range(epoch):
         print('\nEpoch #{}:'.format(e+1))
         model.train(mode=True)
@@ -121,20 +120,17 @@ if __name__ == '__main__':
         for x,y in trainloader:
             xdata = x.cuda()
             ydata = y.cuda()
-            tgt = torch.ones_like(ydata)*Token.start
-            tgt[:,1:] = ydata[:,:-1]
             optimizer.zero_grad()
-            output = model(xdata, tgt)
+            output = model(xdata)
             loss = criterion(output, ydata)
             loss.backward()
-            tloss = tloss + loss.item()
-            nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            nn.utils.clip_grad_norm_(model.parameters(), 0.1)
             optimizer.step()
             pred = output.argmax(axis=1)
             seqcorrect = (pred==ydata).prod(-1)
             tcorrect = tcorrect + seqcorrect.sum().item()
             tlen = tlen + seqcorrect.nelement()
-        scheduler.step()
+            tloss = tloss + loss.item()
         print('train seq acc:\t'+str(tcorrect/tlen))
         print('train loss:\t{}'.format(tloss/len(trainloader)))
         print('Current LR:' + str(scheduler.get_lr()[0]))
@@ -145,9 +141,7 @@ if __name__ == '__main__':
         for x,y in valloader:
             xdata = x.cuda()
             ydata2 = y.cuda()
-            tgt = torch.ones_like(ydata2)*Token.start
-            tgt[:,1:] = ydata2[:,:-1]
-            output = model(xdata, tgt)
+            output = model(xdata)
             loss = criterion(output, ydata2)
             pred2 = output.argmax(axis=1)
             seqcorrect = (pred2==ydata2).prod(-1)
