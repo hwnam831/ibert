@@ -131,7 +131,7 @@ class NSPDatasetS2S(Dataset):
 
     def __getitem__(self, idx):
         if not self.iscreated[idx]:
-            ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
+            ndigits = np.random.randint(self.mindigits, self.maxdigits+1)
             seed1 = np.random.randint(10**(ndigits-1), 10**ndigits)
             seed2 = np.random.randint(10**(ndigits-1), 10**ndigits)
             seq, target = self.rule(seed1, seed2, self.numbers)
