@@ -9,12 +9,6 @@ from torch.utils.data import Dataset, DataLoader
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Number sequence training benchmark")
     parser.add_argument(
-            "--net",
-            type=str,
-            choices=['tf', 'lstm', 'gru'],
-            default='tf',
-            help='tf | minibert | lstm | gru')
-    parser.add_argument(
             "--epochs",
             type=int,
             default='50',
@@ -27,7 +21,7 @@ if __name__ == '__main__':
     parser.add_argument(
             "--validation_size",
             type=int,
-            default='1024',
+            default='1536',
             help='number of validation examples')
     parser.add_argument(
             "--batch_size",
@@ -52,14 +46,11 @@ if __name__ == '__main__':
             help='fib: fibonacci / arith: arithmetic / palin: palindrome')
     args = parser.parse_args()
 
-    if args.net == 'tf':
-        model = Models.TfS2S(args.model_size).cuda()
-    else:
-        model = Models.TfS2S(args.model_size).cuda()
+    model = Models.TfS2S(args.model_size).cuda()
     dataset = NSPDatasetS2S(fib, args.digits, size=args.train_size)
     valset = NSPDatasetS2S(fib, args.digits+1, args.digits-1, size=args.validation_size)
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
-    valloader = DataLoader(valset, batch_size=args.batch_size, shuffle=True, num_workers=2)
+    valloader = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=1.05)
@@ -94,20 +85,24 @@ if __name__ == '__main__':
         print('Current LR:' + str(scheduler.get_lr()[0]))
 
         model.train(mode=False)
-        vcorrect = 0
-        vlen = 0
-        for x,y in valloader:
+        vcorrects = [0 for i in range(args.digits-1, args.digits+2)]
+        vlens = [0 for i in range(args.digits-1, args.digits+2)]
+        for i,(x,y) in enumerate(valloader):
             xdata = x.cuda()
             ydata2 = y.cuda()
+            shard = (3*i)//len(valloader)
             tgt = torch.ones_like(ydata2)*Token.start
             tgt[:,1:] = ydata2[:,:-1]
             output = model(xdata, tgt)
             loss = criterion(output, ydata2)
             pred2 = output.argmax(axis=1)
             seqcorrect = (pred2==ydata2).prod(-1)
-            vcorrect = vcorrect + seqcorrect.sum().item()
-            vlen = vlen + seqcorrect.nelement()
-        print("val accuracy = "+str(vcorrect/vlen))
+            vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
+            vlens[shard] = vlens[shard] + seqcorrect.nelement()
+        curshard = args.digits -1
+        for vc,vl in zip(vcorrects, vlens):
+            print("val accuracy at {} digits = {}".format(curshard,vc/vl))
+            curshard = curshard+1
         #scheduler.step()
         if tcorrect/tlen > 0.5:
             break
@@ -140,18 +135,22 @@ if __name__ == '__main__':
         print('Current LR:' + str(scheduler.get_lr()[0]))
 
         model.train(mode=False)
-        vcorrect = 0
-        vlen = 0
-        for x,y in valloader:
+        vcorrects = [0 for i in range(args.digits-1, args.digits+2)]
+        vlens = [0 for i in range(args.digits-1, args.digits+2)]
+        for i,(x,y) in enumerate(valloader):
             xdata = x.cuda()
             ydata2 = y.cuda()
+            shard = (3*i)//len(valloader)
             tgt = torch.ones_like(ydata2)*Token.start
             tgt[:,1:] = ydata2[:,:-1]
             output = model(xdata, tgt)
             loss = criterion(output, ydata2)
             pred2 = output.argmax(axis=1)
             seqcorrect = (pred2==ydata2).prod(-1)
-            vcorrect = vcorrect + seqcorrect.sum().item()
-            vlen = vlen + seqcorrect.nelement()
-        print("val accuracy = "+str(vcorrect/vlen))
+            vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
+            vlens[shard] = vlens[shard] + seqcorrect.nelement()
+        curshard = args.digits -1
+        for vc,vl in zip(vcorrects, vlens):
+            print("val accuracy at {} digits = {}".format(curshard,vc/vl))
+            curshard = curshard+1
         #scheduler.step()
