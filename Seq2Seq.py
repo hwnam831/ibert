@@ -3,11 +3,17 @@ import torch.nn as nn
 import numpy as np
 import argparse
 import Models
-from NSPDataset import NSPDatasetS2S, Token, fib
+from NSPDataset import NSPDatasetS2S, Token, fib, arith, palindrome
 from torch.utils.data import Dataset, DataLoader
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Number sequence training benchmark")
+    parser.add_argument(
+            "--net",
+            type=str,
+            choices=['tf', 'nam', 'noor', 'lan', 'vikram', 'bruno'],
+            default='tf',
+            help='network choices')
     parser.add_argument(
             "--epochs",
             type=int,
@@ -44,19 +50,32 @@ if __name__ == '__main__':
             choices= ['fib', 'arith', 'palin'],
             default='fib',
             help='fib: fibonacci / arith: arithmetic / palin: palindrome')
+    parser.add_argument(
+            "--lr",
+            type=float,
+            default=1e-4,
+            help='fib: fibonacci / arith: arithmetic / palin: palindrome')
     args = parser.parse_args()
 
     model = Models.TfS2S(args.model_size).cuda()
-    dataset = NSPDatasetS2S(fib, args.digits, size=args.train_size)
-    valset = NSPDatasetS2S(fib, args.digits+1, args.digits-1, size=args.validation_size)
+    if args.seq_type == 'fib':
+        dataset = NSPDatasetS2S(fib, args.digits, size=args.train_size)
+        valset = NSPDatasetS2S(fib, args.digits+1, args.digits-1, size=args.validation_size)
+    elif args.seq_type == 'arith':
+        dataset = NSPDatasetS2S(arith, args.digits, size=args.train_size)
+        valset = NSPDatasetS2S(arith, args.digits+1, args.digits-1, size=args.validation_size)
+    else:
+        dataset = NSPDatasetS2S(palindrome, args.digits, numbers=1, size=args.train_size)
+        valset = NSPDatasetS2S(palindrome, args.digits+1, args.digits-1, numbers=1, size=args.validation_size)
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     valloader = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=1.05)
     criterion = nn.CrossEntropyLoss()
 
     epoch = args.epochs
+    print("Start warmup phase")
     for e in range(15):
         print('\nEpoch #{}:'.format(e+1))
         model.train(mode=True)
@@ -106,6 +125,8 @@ if __name__ == '__main__':
         #scheduler.step()
         if tcorrect/tlen > 0.5:
             break
+    
+    print('Warmup ended. Start LR degradation')
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.96)
     for e in range(epoch):
         print('\nEpoch #{}:'.format(e+1))

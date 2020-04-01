@@ -162,7 +162,7 @@ def printseq2(x,y):
     print("target:")
     print('\t' + ' '.join([tokenmap[n] for n in y]))
 if __name__ == '__main__':
-    dataset = NSPDatasetS2S(fib,5)
+    dataset = NSPDatasetS2S(palindrome,5,4, numbers=1)
     loader = DataLoader(dataset, batch_size=4)
     for i in range(10):
         x,y = dataset.__getitem__(i)
