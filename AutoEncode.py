@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 import argparse
-from Options import get_args
+import Options
 import Models
-from NSPDataset import NSPDatasetS2S, Token, fib, arith, palindrome
+from NSPDataset import NSPDatasetAE, Token, fib, arith, palindrome
 from torch.utils.data import Dataset, DataLoader
 
 def train(model, trainloader, criterion, optimizer, scheduler):
@@ -15,11 +15,9 @@ def train(model, trainloader, criterion, optimizer, scheduler):
         for x,y in trainloader:
             xdata       = x.cuda()
             ydata       = y.cuda()
-            tgt         = torch.ones_like(ydata)*Token.start
-            tgt[:,1:]   = ydata[:,:-1]
             optimizer.zero_grad()
             
-            output      = model(xdata, tgt)
+            output      = model(xdata)
             loss        = criterion(output, ydata)
             loss.backward()
             tloss       = tloss + loss.item()
@@ -48,9 +46,7 @@ def validate(model, valloader, args):
             xdata       = x.cuda()
             ydata2      = y.cuda()
             shard       = (3*i)//len(valloader)
-            tgt         = torch.ones_like(ydata2)*Token.start
-            tgt[:,1:]   = ydata2[:,:-1]
-            output      = model(xdata, tgt)
+            output      = model(xdata)
             pred2       = output.argmax(axis=1)
             seqcorrect  = (pred2==ydata2).prod(-1)
             vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
@@ -67,21 +63,38 @@ def validate(model, valloader, args):
 
 if __name__ == '__main__':
     
-    args = get_args()
+    args = Options.get_args()
 
-    print('Executing Seq2Seq model with TfS2S Model')
-    epoch = args.epochs
+    if args.net == 'tf':
+        print('Executing Autoencoder model with TfAE Model')
+        model = Models.TfAE(args.model_size).cuda()
+    elif args.net == 'cnn':
+        print('Executing Autoencoder model with CNNAE Model')
+        model = Models.CNNAE(args.model_size).cuda()
+    else :
+        print('Network {} not supported yet'.format(args.net))
+        exit()
 
-    model       = Models.TfS2S(args.model_size).cuda()
-    dataset     = NSPDatasetS2S(fib, args.digits, size=args.train_size)
-    valset      = NSPDatasetS2S(fib, args.digits+1, args.digits-1, size=args.validation_size)
+    if args.seq_type == 'fib':
+        dataset     = NSPDatasetAE(fib, args.digits, size=args.train_size)
+        valset      = NSPDatasetAE(fib, args.digits+1, args.digits-1, size=args.validation_size)
+    elif args.seq_type == 'arith':
+        dataset     = NSPDatasetAE(arith, args.digits, size=args.train_size)
+        valset      = NSPDatasetAE(arith, args.digits+1, args.digits-1, size=args.validation_size)
+    elif args.seq_type == 'palin':
+        dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
+        valset      = NSPDatasetAE(palindrome, args.digits+1, args.digits-1, numbers=1, size=args.validation_size)
+    else :
+        print('Sequence type {} not supported yet'.format(args.seq_type))
+        exit()
+
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     valloader   = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
-    optimizer   = torch.optim.Adam(model.parameters(), lr=1e-4)
-    scheduler   = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.96)
+    optimizer   = torch.optim.Adam(model.parameters(), lr=args.lr)
+    scheduler   = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.97)
     criterion   = nn.CrossEntropyLoss()
 
-    for e in range(epoch):
+    for e in range(args.epochs):
         print('\nEpoch #{}:'.format(e+1))
         
         #train the model
