@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from Encoder import TFEncoder
+from Encoder import TFEncoder, CNNEncoder
 from Decoder import TFDecoder
 
 
@@ -42,4 +42,19 @@ class TfAE(nn.Module):
         ipos = torch.arange(input2.size(0), device=input.device)[:,None].expand(input2.shape[:2])
         src = self.embedding(input2) + self.posembed(ipos)
         out = self.tfmodel(src)
+        return self.fc(out).permute(1,2,0)
+
+class CNNAE(nn.Module):
+    def __init__(self, model_size=512):
+        super().__init__()
+        self.model_size=model_size
+        self.embedding = nn.Conv1d(16, model_size, 3, padding=1)
+        self.norm = nn.BatchNorm1d(model_size)
+        self.encoder = CNNEncoder(model_size)
+        self.fc = nn.Linear(model_size, 16)
+    
+    #Batch-first in (N,S,C), batch-first out (N,C,S)
+    def forward(self, input):
+        embed = self.norm(self.embedding(input.permute(0,2,1)))
+        out = self.encoder(embed.permute(2,0,1))
         return self.fc(out).permute(1,2,0)

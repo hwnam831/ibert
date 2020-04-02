@@ -15,7 +15,7 @@ class TFDecoder(nn.Module):
         out = self.decoder(target, memory, tgt_mask=tmask)
         return self.fc(out)
     def generate_square_subsequent_mask(self, sz):
-        r"""Generate a square mask for the sequence. The masked positions are filled with float('-inf').
+        """Generate a square mask for the sequence. The masked positions are filled with float('-inf').
             Unmasked positions are filled with float(0.0).
         """
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
