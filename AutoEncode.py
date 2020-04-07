@@ -4,6 +4,7 @@ import numpy as np
 import argparse
 import Options
 import Models
+import Nam
 from NSPDataset import NSPDatasetAE, Token, fib, arith, palindrome
 from torch.utils.data import Dataset, DataLoader
 
@@ -71,8 +72,14 @@ if __name__ == '__main__':
     elif args.net == 'cnn':
         print('Executing Autoencoder model with CNNAE Model')
         model = Models.CNNAE(args.model_size).cuda()
+    elif args.net == 'xlnet':
+        print('Executing Autoencoder model with XLNet-like Model')
+        model = Models.XLNetAE(args.model_size).cuda()
+    elif args.net == 'nam':
+        print('Executing Autoencoder model with Nam\'s Architecture')
+        model = Nam.NamAE(args.model_size).cuda()
     else :
-        print('Network {} not supported yet'.format(args.net))
+        print('Network {} not supported'.format(args.net))
         exit()
 
     if args.seq_type == 'fib':

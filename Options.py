@@ -12,7 +12,7 @@ def get_args():
     parser.add_argument(
             "--net",
             type=str,
-            choices=['tf', 'cnn', 'nam', 'noor', 'lan', 'vikram', 'bruno'],
+            choices=['tf', 'cnn', 'xlnet', 'nam', 'noor', 'lan', 'vikram', 'bruno'],
             default='tf',
             help='network choices')
     parser.add_argument(
@@ -33,7 +33,7 @@ def get_args():
     parser.add_argument(
             "--batch_size",
             type=int,
-            default='256',
+            default='128',
             help='batch size')
     parser.add_argument(
             "--model_size",
