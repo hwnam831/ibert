@@ -61,33 +61,35 @@ class CNNAE(nn.Module):
         out = self.encoder(embed.permute(2,0,1))
         return self.fc(out).permute(1,2,0)
 
+ 
+
 
 class XLNetRelativeAttention(nn.Module):
-    def __init__(self, config):
+    #def __init__(self, config):
+    def __init__(self, d_model=512, n_head=3, d_head=3, d_inner=3, layer_norm_eps, dropout, ff_activation="relu"):#, output_attentions=False):
         super().__init__())
-        self.output_atten = config.output_attentions
 
-        if config.d_model % config.n_head != 0:
+        if d_model % n_head != 0:
             raise ValueError("Hidden size need to be multiple of number of attention. correct d_model and n_head values")
     
-        self.n_head = config.n_head
-        self.d_head = config.d_head
-        self.d_model = config.d_model
-        self.scale = 1/(config.d_head ** 0.5)
+        self.n_head = n_head
+        self.d_head = d_head
+        self.d_model = d_model
+        self.scale = 1/(d_head ** 0.5)
 
-        self.q = nn.Parameter(torch.FloatTensor(config.d_model, self.n_head, self.d_head))
-        self.k = nn.Parameter(torch.FloatTensor(config.d_model, self.n_head, self.d_head))
-        self.v = nn.Parameter(torch.FloatTensor(config.d_model, self.n_head, self.d_head))
-        self.o = nn.Parameter(torch.FloatTensor(config.d_model, self.n_head, self.d_head))
-        self.r = nn.Parameter(torch.FloatTensor(config.d_model, self.n_head, self.d_head))
+        self.q = nn.Parameter(torch.FloatTensor(d_model, self.n_head, self.d_head))
+        self.k = nn.Parameter(torch.FloatTensor(d_model, self.n_head, self.d_head))
+        self.v = nn.Parameter(torch.FloatTensor(d_model, self.n_head, self.d_head))
+        self.o = nn.Parameter(torch.FloatTensor(d_model, self.n_head, self.d_head))
+        self.r = nn.Parameter(torch.FloatTensor(d_model, self.n_head, self.d_head))
 
         self.r_r_bais = nn.Parameter(torch.FloatTensor(self.n_head, self.d_head))
         self.r_s_bais = nn.Parameter(torch.FloatTensor(self.n_head, self.d_head))
         self.r_w_bais = nn.Parameter(torch.FloatTensor(self.n_head, self.d_head))
         self.seg_embd = nn.Parameter(torch.FloatTensor(2, self.n_head, self.d_head))
 
-        self.layer_norm = nn.LayerNorm(config.d_model, eps = config.layer_norm_eps)
-        self.dropout = nn.Dropout(config.dropout)
+        self.layer_norm = nn.LayerNorm(d_model, eps=layer_norm_eps)
+        self.dropout = nn.Dropout(dropout)
 
 
         def rel_shift(x, klen=-1):
@@ -110,7 +112,7 @@ class XLNetRelativeAttention(nn.Module):
 
             return x
 
-        //TODO : Remove seg_mat
+        # //TODO : Remove seg_mat
         def rel_attn_core(self, q_head, k_head_h, v_head_h, k_head_r, seg_mat=None, attn_mask=None, head_mask=None):
 
             ac = torch.einsum("ibnd, jbnd->bnji", q_head+self.r_w_bais, k_head_h)
@@ -139,8 +141,8 @@ class XLNetRelativeAttention(nn.Module):
 
             attn_vec = torch.einsum("bnij, jbnd->ibnd", attn_prob, v_head_h)
 
-            if self.output_attentions:
-                return attn_vec, torch.einsum("bnij->ijbn", attn_prob)
+            # if self.output_attentions:
+            #     return attn_vec, torch.einsum("bnij->ijbn", attn_prob)
             
             return attn_vec
 
@@ -181,8 +183,8 @@ class XLNetRelativeAttention(nn.Module):
                                                 head_mask = head_mask
                                                 )
                 
-                if self.output_attentions: 
-                    attn_vec_h, attn_prob_h = attn_vec_h
+                # if self.output_attentions: 
+                #     attn_vec_h, attn_prob_h = attn_vec_h
                 
                 output_h = self.post_attention(h, attn_vec_h)
 
@@ -215,14 +217,14 @@ class XLNetRelativeAttention(nn.Module):
                                                     head_mask = head_mask
                                                     )
 
-                    if self.output_attentions: 
-                        attn_vec_g, attn_prob_g = attn_vec_g
+                    # if self.output_attentions: 
+                    #     attn_vec_g, attn_prob_g = attn_vec_g
 
 
                 output_g = self.post_attention(g, attn_vec_g)
 
-                if self.output_attentions: 
-                    attn_prob = attn_prob_h, attn_vec_g
+                # if self.output_attentions: 
+                #     attn_prob = attn_prob_h, attn_vec_g
             
             
             else: 
@@ -247,8 +249,8 @@ class XLNetRelativeAttention(nn.Module):
                                               head_mask = head_mask
                                               )
 
-                if self.output_attentions: 
-                    attn_vec, attn_prob = attn_vec
+                # if self.output_attentions: 
+                #     attn_vec, attn_prob = attn_vec
 
                 output_h = self.post_attention(h, attn_vec)
                 output_g = None
@@ -257,19 +259,20 @@ class XLNetRelativeAttention(nn.Module):
 
             outputs = (output_h, output_g)
 
-            if self.output_attentions:
-                outputs = outputs + (attn_prob,)                
+            # if self.output_attentions:
+            #     outputs = outputs + (attn_prob,)                
             
             return outputs
 
 class XLNetFF(nn.Module):
-    def __init__(self, config):
+#    def __init__(self, config):
+    def __init__(self, d_model=512, n_head=3, d_head=3, d_inner=3, layer_norm_eps, dropout, ff_activation="relu"):#, output_attentions=False):
         super().__init__()
-        self.layer_norm = nn.LayerNorm(config.d_model, eps = config.layer_norm_eps)
-        self.layer_1    = nn.Linear(config.d_model, config.d_inner)
-        self.layer_2    = nn.Linear(config.inner, config.d_model)
-        self.dropout    = nn.Dropout(config.dropout)
-        self.activation_function = config.ff_activation
+        self.layer_norm = nn.LayerNorm(d_model, eps = layer_norm_eps)
+        self.layer_1    = nn.Linear(d_model, d_inner)
+        self.layer_2    = nn.Linear(d_inner, d_model)
+        self.dropout    = nn.Dropout(dropout)
+        self.activation_function = ff_activation
 
     def forward(self, inp):
         output = self.layer_1(inp)
@@ -284,13 +287,14 @@ class XLNetFF(nn.Module):
 
 
 class XLNetLayer(nn.Module):
-    def __init__(self, config):
+#    def __init__(self, config):
+    def __init__(self, d_model=512, n_head=3, d_head=3, d_inner=3, layer_norm_eps, dropout, ff_activation="relu"):#, output_attentions=False):
         super().__init__()
-        self.rel_attn = XLNetRelativeAttention(config)
-        self.ff = XLNetFF(config)
-        self.dropout = nn.Dropout(config.dropout)
+        self.rel_attn = XLNetRelativeAttention(d_model,n_head,d_head,d_inner,layer_norm_eps, dropout,ff_activation)
+        self.ff = XLNetFF(d_model,n_head,d_head,d_inner,layer_norm_eps, dropout,ff_activation)
+        self.dropout = nn.Dropout(dropout)
 
-    def forward(self, output_h, output_g, attn_mask_h, attn_mask_g, r, seg_mat, mems=None, target_mapping=None, head_mask=None):
+    def forward(self, output_h, output_g, attn_mask_h, attn_mask_g, r, seg_mat=None, mems=None, target_mapping=None, head_mask=None):
         output = self.rel_attn(output_h, 
                                output_g, 
                                attn_mask_h, 
