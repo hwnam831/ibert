@@ -41,6 +41,11 @@ def get_args():
             default='512',
             help='internal channel dimension')
     parser.add_argument(
+            "--num_heads",
+            type=int,
+            default='4',
+            help='number of heads in TF-based models')
+    parser.add_argument(
             "--digits",
             type=int,
             default='5',

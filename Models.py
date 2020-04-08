@@ -27,14 +27,14 @@ class TfS2S(nn.Module):
         return self.decoder(tgt, memory).permute(1,2,0)
 
 class TfAE(nn.Module):
-    def __init__(self, model_size=512, maxlen=128, vocab_size=16):
+    def __init__(self, model_size=512, nhead=4, maxlen=128, vocab_size=16):
         super().__init__()
         self.model_size=model_size
         self.maxlen=maxlen
         self.vocab_size = vocab_size
         self.embedding = nn.Linear(vocab_size, model_size)
         self.posembed = nn.Embedding(maxlen, model_size)
-        self.enclayer = nn.TransformerEncoderLayer(d_model=model_size, nhead=2)
+        self.enclayer = nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead)
         self.norm = nn.LayerNorm(model_size)
         self.tfmodel = nn.TransformerEncoder(self.enclayer, num_layers=6, norm=self.norm)
         self.fc = nn.Linear(model_size, vocab_size)
@@ -63,7 +63,7 @@ class CNNAE(nn.Module):
         return self.fc(out).permute(1,2,0)
 
 class XLNetAE(nn.Module):
-    def __init__(self, d_model=512, maxlen=128, num_layers=6, vocab_size=16):
+    def __init__(self, d_model=512, nhead=4, maxlen=128, num_layers=6, vocab_size=16):
         super().__init__()
         self.d_model=d_model
         self.maxlen=maxlen
@@ -74,7 +74,7 @@ class XLNetAE(nn.Module):
         #self.enclayer = XLNetEncoderLayer(d_model=d_model, nhead=2)
         #self.encoder = nn.TransformerEncoder(self.enclayer, num_layers=num_layers)
         self.encoder = nn.ModuleList([
-            XLNetEncoderLayer(d_model=d_model, nhead=2) for _ in range(num_layers)
+            XLNetEncoderLayer(d_model=d_model, nhead=nhead) for _ in range(num_layers)
         ])
         self.fc = nn.Linear(d_model, vocab_size)
 
