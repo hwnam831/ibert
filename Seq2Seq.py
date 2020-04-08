@@ -5,6 +5,7 @@ import argparse
 from Options import get_args
 import Models
 from NSPDataset import NSPDatasetS2S, Token, fib, arith, palindrome
+from PBTCDataset import PBTCDataset
 from torch.utils.data import Dataset, DataLoader
 
 def train(model, trainloader, criterion, optimizer, scheduler):
@@ -73,8 +74,9 @@ if __name__ == '__main__':
     epoch = args.epochs
 
     model       = Models.TfS2S(args.model_size).cuda()
-    dataset     = NSPDatasetS2S(fib, args.digits, size=args.train_size)
-    valset      = NSPDatasetS2S(fib, args.digits+1, args.digits-1, size=args.validation_size)
+    dataset     = PBTCDataset('train')
+    valset      = PBTCDataset('test')
+    
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     valloader   = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
     optimizer   = torch.optim.Adam(model.parameters(), lr=1e-4)
