@@ -319,6 +319,186 @@ class XLNetLayer(nn.Module):
 
 
 
+class XLNetModel(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.output_attentions = config.output_attentions
+        self.output_hidden_states = config.output_hidden_states
+        self.output_past = config.output_past
+
+        self.mem_len    = config.mem_len
+        self.reuse_len  = config.reuse_len
+        self.d_model    = config.d_model
+        self.same_length= config.same_length
+        self.attn_type  = config.attn_type
+        self.bi_data    = config.bi_data
+        self.clamp_len  = config.clamp_len
+        self.n_layer    = config.n_layer
+
+        self.mask_emb = nn.Parameter(torch.FloatTensor(1,1,config.d_model))
+        self.layer = nn.ModuleList([XLNetLayer(config) for _ in range(config.n_layer)])
+        self.dropout = nn.Dropout(config.dropout)
+
+    
+    def create_mask(self, qlen, mlen):
+        """
+        args: qlen - sequence length
+              mlen - mask length
+
+                  same_length=False:      same_length=True:
+                  <mlen > <  qlen >       <mlen > <  qlen >
+               ^ [0 0 0 0 0 1 1 1 1]     [0 0 0 0 0 1 1 1 1]
+                 [0 0 0 0 0 0 1 1 1]     [1 0 0 0 0 0 1 1 1]
+            qlen [0 0 0 0 0 0 0 1 1]     [1 1 0 0 0 0 0 1 1]
+                 [0 0 0 0 0 0 0 0 1]     [1 1 1 0 0 0 0 0 1]
+               v [0 0 0 0 0 0 0 0 0]     [1 1 1 1 0 0 0 0 0]
+
+        """
+
+        attn_mask       = torch.ones([qlen, qlen])
+        mask_up         = torch.triu(attn_mask, diagonal=1)
+        attn_mask_pad   = torch.zeros([qlen,qlen])
+        ret             = torch.cat([attn_mask_pad, mask_up], dim=1)
+
+        if self.same_length :
+            mask_lo = torch.tril(attn_mask, diagonal=-1)
+            ret     = torch.cat([ret[:, :qlen,mask_lo, ret[:, qlen:]], dim=1)
+
+        ret = ret.to(next(self.parameters()))
+        return ret
+
+
+    def cache_mem:
+        if self.reuse_len is not None and self.reuse_len >0:
+            curr_out = curr_out[:self.reuse_len]
+
+        if prev_mem is None:
+            new_mem = curr_out[-self.mem_len:]
+        else:
+            new_mem = torch.cat([prev_mem, curr_out], dim=0)[-self.mem_len:]
+
+        return new_mem.detach()
+
+    
+    
+    def positional_embedding(pos_seq, inv_freq, bsz=None):
+
+        sinusoid_inp = torch.einsum("i,d->id", pos_seq, inv_freq)
+        pos_emb = torch.cat([torch.sin(sinusoid_inp), torch.cos(sinusoid_inp)], dim=-1)
+        pos_emb = pos_emb[:, None, :]
+
+        if bsz is not None:
+            pos_emb = pos_emb.expand(-1, bsz, -1)
+
+        return pos_emb
+
+    def relative_positional_encoding(self, qlen, klen, bsz= None):
+
+        freq_seq = torch.arrange(0, self.d_model, 2.0, dtype=torch.float)
+        inv_freq = 1/torch.pow(10000, (freq_seq/self.d_model))
+
+        if self.attn_type == "bi":
+            beg, end = klen, -qlen
+        else if self.attn_type == "uni":
+            beg, end = klen, -1
+        else:
+            raise ValueError("Uknown attn_type")
+
+        
+        if self.bi_data:
+            fwd_pos_seq = torch.arrange(beg, end, -1.0, dtype=torch.float)
+            bwd_pos_seq = torch.arrange(-beg, end, -1.0, dtype=torch.float)
+
+            if self.clamp_len  >0:
+                fwd_pos_seq = fwd_pos_seq.clamp(-self.clamp_len, self.clamp_len)
+                bwd_pos_seq = bwd_pos_seq.clamp(-self.clamp_len, self.clamp_len)
+
+            if self.bsz is not None:
+                fwd_pos_emb = self.positional_embedding(fwd_pos_seq, inv_freq, bsz //2)
+                bwd_pos_emb = self.positional_embedding(bwd_pos_seq, inv_freq, bsz //2)
+            else:
+                fwd_pos_emb = self.positional_embedding(fwd_pos_seq, inv_freq)
+                bwd_pos_emb = self.positional_embedding(bwd_pos_seq, inv_freq)
+
+            pos_emb = torch.cat([fwd_pos_emb, bwd_pos_emb])
+
+        else:
+            fwd_pos_seq = torch.arrange(beg, end, -1.0)
+            if self.clamp_len >0:
+                fwd_pos_seq = fwd_pos_seq.clamp(-self.clamp_len, self.clamp_len)
+            pos_emb = self.positional_embedding(fwd_pos_seq, inv_freq, bsz)
+
+        pos_emb = pos_emb.to(next(self.parameter()))
+        return pos_emb
+
+
+    def forward(self, 
+                input_ids=None, 
+                attention_mask= None, 
+                mems= None, 
+                perm_mask=None, 
+                target_mapping=None,
+                token_type_ids=None,
+                input_mask=None, 
+                head_mask=None, 
+                inputs_embeds=None,
+                ):
+        if input_ids is not None and inputs_embeds is not None:
+            raise ValueError("Input ids and embds cannot be set")
+        elif input_ids is not None:
+            input_ids = input_ids.transpose(0,1).contigous()
+            qlen, bsz = input_ids.shape[0], input_ids.shape[1]
+        elif inputs_embeds is not None:
+            inputs_embeds = inputs_embeds.transpose(0,1).contigous()
+            qlen, bsz = inputs_embeds.shape[0], inputs_embeds.shape[1]
+        else:
+            raise ValueError("Either inputid or embds is needed")
+
+        
+        token_type_ids = token_type_ids.transpose(0,1).contigous() if token_type_ids is not None else None 
+        input_mask = input_mask.transpose(0,1).contigous() if input_mask is not None else None
+        attention_mask = attention_mask.transpose(0,1).contigous() if attention_mask is not None else None
+        perm_mask = perm_mask.transpose(0,1).contigous() if perm_mask is not None else None
+        target_mapping = target_mapping.transpose(0,1).contigous() if target_mapping is not None else None
+
+        mlen = mems[0].shape[0] if mems is not None and mems[0] is not None else 0
+        klen = mlen + qlen
+
+        #TODO
+        dtype_float = next(self.parameter()).dtype
+        device = next(self.parameter()).device
+
+
+        if self.attn_type == "uni":
+            attn_mask = self.create_mask(qlen, mlen)
+            attn_mask = attn_mask[]:,:,None, None]
+        elif self.attn_type == "bi":
+            attn_mask = None
+        else:
+            raise ValueError("Need to specify attn_mask type")
+
+
+        if input_mask is None and attention_mask is not None:
+            input_mask = 1.0 - attention_mask
+        if input_mask is not None and perm_mask is not None:
+            data_mask = input_mask[None] + perm_mask
+        elif input_mask is not None and perm_mask is None:
+            data_mask = input_mask[None]
+        elif input_mask is None and perm_mask is not None:
+            data_mask = perm_mask
+        else:
+            data_mask = None
+
+
+        if data_mask is not None:
+            if mlen >0:
+                mems_mask = torch.zeros([data_mask.shape[0], mlen, bsz]).to(data_mask)
+                data_mask = torch.cat([mems_mask, data_mask], dim=1)
+
+
+
+
+
 class XLNetConfig(object):
     output_attentions=False
     output_hidden_states=False
