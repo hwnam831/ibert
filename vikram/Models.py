@@ -320,7 +320,7 @@ class XLNetLayer(nn.Module):
 
 
 class XLNetModel(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config=XLNetConfig()):
         super().__init__()
         self.output_attentions = config.output_attentions
         self.output_hidden_states = config.output_hidden_states
@@ -607,20 +607,22 @@ class XLNetModel(nn.Module):
 
 
 class XLNetConfig(object):
+
+    d_model=512
+    n_layer=3
+    n_head=16
+    d_head=3
+    d_inner=2048
+    ff_activation="gelu"
+    attn_type="bi"
+    mem_len=None
+    reuse_len=None
+    same_length=False
+    bi_data=None
+    clamp_len=-1
+    layer_norm_eps=1e-12
+    dropout=0.1
+    output_past=False
     output_attentions=False
     output_hidden_states=False
-    # hidden_size=256
-    # num_hidden_layers=6
-    # num_attention_heads=2
-    # intermediate_size=2048
-    # hidden_dropout_prob=0.1
-    # attention_probs_dropout_prob=0.1
-    # max_position_embeddings=128
-    # layer_norm_eps=1e-12
-    d_model=512
-    n_head=3
-    d_head=3
-    d_inner=3
-    layer_norm_eps
-    dropout=0.1
-    ff_activation="gelu"
+    

@@ -12,9 +12,9 @@ if __name__ == '__main__':
     parser.add_argument(
             "--net",
             type=str,
-            choices=['cnn', 'tf', 'minibert', 'lstm', 'gru'],
+            choices=['cnn', 'tf', 'minibert', 'lstm', 'gru', 'xlnet'],
             default='tf',
-            help='cnn | tf | minibert | lstm | gru')
+            help='cnn | tf | minibert | lstm | gru | xlnet')
     parser.add_argument(
             "--epochs",
             type=int,
@@ -53,8 +53,8 @@ if __name__ == '__main__':
             help='fib: fibonacci / arith: arithmetic / palin: palindrome')
     args = parser.parse_args()
 
-    if args.net == 'minibert':
-        model = Models.MiniBertAE(args.model_size).cuda()
+    if args.net == 'xlnet':
+        model = Models.XLNetModel(args.model_size).cuda()
     elif args.net == 'cnn':
         model = Models.CNNAutoEncoder(args.model_size).cuda()
     else :
