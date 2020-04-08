@@ -320,7 +320,7 @@ class XLNetLayer(nn.Module):
 
 
 class XLNetModel(nn.Module):
-    def __init__(self, config=XLNetConfig()):
+    def __init__(self, model_size, vocab_size=16, config=XLNetConfig()):
         super().__init__()
         self.output_attentions = config.output_attentions
         self.output_hidden_states = config.output_hidden_states
@@ -339,7 +339,6 @@ class XLNetModel(nn.Module):
         self.layer = nn.ModuleList([XLNetLayer(config) for _ in range(config.n_layer)])
         self.dropout = nn.Dropout(config.dropout)
 
-    
     def create_mask(self, qlen, mlen):
         """
         args: qlen - sequence length
@@ -360,15 +359,14 @@ class XLNetModel(nn.Module):
         attn_mask_pad   = torch.zeros([qlen,qlen])
         ret             = torch.cat([attn_mask_pad, mask_up], dim=1)
 
-        if self.same_length :
+        if self.same_length:
             mask_lo = torch.tril(attn_mask, diagonal=-1)
-            ret     = torch.cat([ret[:, :qlen,mask_lo, ret[:, qlen:]], dim=1)
+            ret     = torch.cat([ret[:, :qlen],mask_lo, ret[:, qlen:]], dim=1)
 
         ret = ret.to(next(self.parameters()))
         return ret
-
-
-    def cache_mem:
+        
+    def cache_mem(self, curr_out, prev_mem):
         if self.reuse_len is not None and self.reuse_len >0:
             curr_out = curr_out[:self.reuse_len]
 
@@ -379,7 +377,6 @@ class XLNetModel(nn.Module):
 
         return new_mem.detach()
 
-    
     
     def positional_embedding(pos_seq, inv_freq, bsz=None):
 
@@ -455,11 +452,11 @@ class XLNetModel(nn.Module):
             raise ValueError("Either inputid or embds is needed")
 
         
-        token_type_ids = token_type_ids.transpose(0,1).contiguous() if token_type_ids is not None else None 
-        input_mask = input_mask.transpose(0,1).contiguous() if input_mask is not None else None
-        attention_mask = attention_mask.transpose(0,1).contiguous() if attention_mask is not None else None
-        perm_mask = perm_mask.transpose(0,1).contiguous() if perm_mask is not None else None
-        target_mapping = target_mapping.transpose(0,1).contiguous() if target_mapping is not None else None
+        token_type_ids  = token_type_ids.transpose(0,1).contiguous() if token_type_ids is not None else None 
+        input_mask      = input_mask.transpose(0,1).contiguous() if input_mask is not None else None
+        attention_mask  = attention_mask.transpose(0,1).contiguous() if attention_mask is not None else None
+        perm_mask       = perm_mask.transpose(0,1).contiguous() if perm_mask is not None else None
+        target_mapping  = target_mapping.transpose(0,1).contiguous() if target_mapping is not None else None
 
         mlen = mems[0].shape[0] if mems is not None and mems[0] is not None else 0
         klen = mlen + qlen
@@ -597,12 +594,6 @@ class XLNetModel(nn.Module):
             outputs = outputs + (attentions,)
         
         return outupts
-
-
-
-
-
-
 
 
 
