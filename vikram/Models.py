@@ -446,20 +446,20 @@ class XLNetModel(nn.Module):
         if input_ids is not None and inputs_embeds is not None:
             raise ValueError("Input ids and embds cannot be set")
         elif input_ids is not None:
-            input_ids = input_ids.transpose(0,1).contigous()
+            input_ids = input_ids.transpose(0,1).contiguous()
             qlen, bsz = input_ids.shape[0], input_ids.shape[1]
         elif inputs_embeds is not None:
-            inputs_embeds = inputs_embeds.transpose(0,1).contigous()
+            inputs_embeds = inputs_embeds.transpose(0,1).contiguous()
             qlen, bsz = inputs_embeds.shape[0], inputs_embeds.shape[1]
         else:
             raise ValueError("Either inputid or embds is needed")
 
         
-        token_type_ids = token_type_ids.transpose(0,1).contigous() if token_type_ids is not None else None 
-        input_mask = input_mask.transpose(0,1).contigous() if input_mask is not None else None
-        attention_mask = attention_mask.transpose(0,1).contigous() if attention_mask is not None else None
-        perm_mask = perm_mask.transpose(0,1).contigous() if perm_mask is not None else None
-        target_mapping = target_mapping.transpose(0,1).contigous() if target_mapping is not None else None
+        token_type_ids = token_type_ids.transpose(0,1).contiguous() if token_type_ids is not None else None 
+        input_mask = input_mask.transpose(0,1).contiguous() if input_mask is not None else None
+        attention_mask = attention_mask.transpose(0,1).contiguous() if attention_mask is not None else None
+        perm_mask = perm_mask.transpose(0,1).contiguous() if perm_mask is not None else None
+        target_mapping = target_mapping.transpose(0,1).contiguous() if target_mapping is not None else None
 
         mlen = mems[0].shape[0] if mems is not None and mems[0] is not None else 0
         klen = mlen + qlen
@@ -494,6 +494,113 @@ class XLNetModel(nn.Module):
             if mlen >0:
                 mems_mask = torch.zeros([data_mask.shape[0], mlen, bsz]).to(data_mask)
                 data_mask = torch.cat([mems_mask, data_mask], dim=1)
+            if attn_mask is None:
+                attn_mask = data_mask[:,:,:, None]
+            else:
+                attn_mask += data_mask[:,:,:, None]
+
+        if attn_mask is not None:
+            attn_mask = (attn_mask>0).to(dtype_float)
+
+        if attn_mask  is not None:
+            non_tgt_mask = -torch.eye(qlen).to(attn_mask)
+            
+            if mlen >0:
+                non_tgt_mask = torch.cat([torch.zeros([qlen, mlen]).to(attn_mask), non_tgt_mask], dim=-1)
+            non_tgt_mask = ((attn_mask+non_tgt_mask[:,:,None,None])>0).to(attn_mask)
+
+        else:
+            non_tgt_mask = None
+        
+        #No word embeddings
+        output_g = None
+        
+        if token_type_ids is not None:
+            if mlen > 0: 
+                mem_pad = torch.zeros([mlen, bsz], dtype = torch.long, device=device)
+                cat_ids = torch.cat([mem_pad, token_type_ids], dim=0)
+            else:
+                cat_ids = token_type_ids
+            
+            seg_mat =  (token_type_ids[:,None] != cat_ids[None,:]).long()
+            seg_mat = F.one_hot(seg_mat,num_classes=2).to(dtype_float)
+        else: 
+            seg_mat = None
+        
+
+        pos_emb = self.relative_positional_encoding(qlen, klen, bsz=bsz)
+        pos_emb = self.dropout(pos_emb)
+
+        if head_mask is not None:
+            if head_mask.dim() == 1:
+                head_mask = head_mask.unsqueeze(0).unsqueeze(0).unsqueeze(0).unsqueeze(0)
+            elif head_mask.dim() == 2:
+                head_mask = head_mask.expand(self.n_layer, -1,-1,-1,-1)
+            head_mask = head_mask.to(dtype=next(self.parameter()).dtype)
+        else :
+            head_mask = [None] * self.n_layer
+        
+
+        new_mems = ()
+        if mems is None:
+            mems = [None] * len(self.layer)
+        
+        attentions = []
+        hidden_states = []
+
+        for i, layer_module in enumerate(self.layer):
+            if self.mem_len is not None and self.mem_len >0 and self.output_past :
+                new_mems = new_mems+ (self.cache_mem(output_h, mems[i]),)
+            if self.output_hidden_states:
+                hidden_states.append((output_h, output_g) if output_g is not None else output_h)
+
+
+            outputs = layer_module(
+                            output_h,
+                            output_g,
+                            attn_mask_h=non_tgt_mask,
+                            attn_mask_g=attn_mask,
+                            r=pos_emb,
+                            seg_mat=seg_mat,
+                            mems=mems[i],
+                            target_mapping=target_mapping,
+                            head_mask=head_mask[i],
+                         )
+            output_h, output_g = output[:2]
+            if self.output_attentions:
+                attentions.append(output[2])
+            
+
+        if self.output_hidden_states:
+            hidden_states.appen(output_h, output_g) if output_g is None else output_h
+        
+        output = self.dropout(output_g if output_g is not None else output_h)
+    
+        output = (output.permute(1,0,2).contiguous(),)
+
+        if self.mem_len is not None and self.mem_len >0 and self.output_past:
+            outputs = outputs_(new_mems,)
+        
+        if self.output_hidden_states:
+            if output_g is not None:
+                hidden_states = tuple(h.permute(1,0,2).contiguous() for hs in hidden_states for h in hs)
+            else:
+                hidden_states = tuple(hs.permute(1,0,2).contiguous() for hs in hidden_states)
+            
+            outputs = outputs + (hidden_states,)
+
+        if self.output_attentions:
+            if target_mapping is not None:
+                attentions = tuple(tuple(att_stream.permute(2,3,0,1).contiguous() for att_stream in t) for t in attentions)
+            else: 
+                attentions = tuple(t.permute(2,3,0,1).contiguous() for t in attentions)
+            outputs = outputs + (attentions,)
+        
+        return outupts
+
+
+
+
 
 
 
