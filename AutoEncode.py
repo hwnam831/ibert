@@ -78,6 +78,9 @@ if __name__ == '__main__':
     elif args.net == 'nam':
         print('Executing Autoencoder model with Nam\'s Architecture')
         model = Nam.GRUTFAE(args.model_size, nhead=args.num_heads).cuda()
+    elif args.net == 'gru':
+        print('Executing Autoencoder model with GRU w.o. Attention')
+        model = Models.GRUAE(args.model_size).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()

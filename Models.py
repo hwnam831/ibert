@@ -115,3 +115,18 @@ class XLNetAE(nn.Module):
             h,g = layer(h,g,r)
         #out = torch.cat(out,dim=-1)
         return self.fc(h).permute(1,2,0)
+
+class GRUAE(nn.Module):
+    def __init__(self, model_size=512, nhead=4, maxlen=128, vocab_size=16):
+        super().__init__()
+        self.model_size=model_size
+        self.vocab_size = vocab_size
+        assert model_size % 2 == 0
+        self.embedding = nn.GRU(vocab_size, model_size//2, 4,\
+            bidirectional=True, dropout=0.1)
+        self.fc = nn.Linear(model_size, vocab_size)
+    #Batch-first in (N,S,C), batch-first out (N,C,S)
+    def forward(self, input):
+        input2 = input.permute(1,0,2)
+        src = self.embedding(input2)[0]
+        return self.fc(src).permute(1,2,0)
