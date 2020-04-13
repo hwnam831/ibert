@@ -77,7 +77,7 @@ if __name__ == '__main__':
         model = Models.XLNetAE(args.model_size, nhead=args.num_heads).cuda()
     elif args.net == 'nam':
         print('Executing Autoencoder model with Nam\'s Architecture')
-        model = Nam.NamAE(args.model_size).cuda()
+        model = Nam.GRUTFAE(args.model_size, nhead=args.num_heads).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()

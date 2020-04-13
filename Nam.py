@@ -149,6 +149,53 @@ class NamEncoderLayer(nn.Module):
 
         return h
 
+class GRUEncoderLayer(nn.Module):
+    def __init__(self, d_model, nhead, dropout=0.1):
+        super().__init__()
+        self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        assert d_model % 2 == 0
+        self.cell = nn.GRU(d_model, d_model//2, 1, bidirectional=True)
+        # Implementation of Feedforward model
+        self.dropout = nn.Dropout(dropout)
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+
+    def forward(self, src, src_mask=None, src_key_padding_mask=None):
+        
+        src2 = self.self_attn(src, src, src, attn_mask=src_mask,
+                              key_padding_mask=src_key_padding_mask)[0]
+        src = src + self.dropout(src2)
+        src = self.norm1(src)
+        src2 = self.cell(src)[0]
+        src = src + self.dropout(src2)
+        src = self.norm2(src)
+
+        return src
+
+
+class GRUTFAE(nn.Module):
+    def __init__(self, model_size=512, nhead=4, maxlen=128, vocab_size=16):
+        super().__init__()
+        self.model_size=model_size
+        self.maxlen=maxlen
+        self.vocab_size = vocab_size
+        assert model_size % 2 == 0
+        self.embedding = nn.GRU(vocab_size, model_size//2, 1, bidirectional=True)
+        self.posembed = nn.Embedding(maxlen, model_size)
+        self.enclayer = GRUEncoderLayer(d_model=model_size, nhead=nhead)
+        self.norm = nn.LayerNorm(model_size)
+        self.tfmodel = nn.TransformerEncoder(self.enclayer, \
+            num_layers=6, norm=self.norm)
+        self.fc = nn.Linear(model_size, vocab_size)
+    #Batch-first in (N,S,C), batch-first out (N,C,S)
+    def forward(self, input):
+        input2 = input.permute(1,0,2)
+        #ipos = torch.arange(input2.size(0), device=input.device)[:,None].expand(input2.shape[:2])
+        #src = self.embedding(input2)[0] + self.posembed(ipos)
+        src = self.embedding(input2)[0]
+        out = self.tfmodel(src)
+        return self.fc(out).permute(1,2,0)
+
 class NamAE(nn.Module):
     def __init__(self, model_size=512, maxlen=128, vocab_size=16):
         super().__init__()
