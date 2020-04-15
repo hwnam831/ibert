@@ -12,7 +12,7 @@ def get_args():
     parser.add_argument(
             "--net",
             type=str,
-            choices=['tf', 'cnn', 'nam', 'noor', 'lan', 'vikram', 'bruno'],
+            choices=['tf', 'cnn', 'gru', 'xlnet', 'nam', 'noor', 'lan', 'vikram', 'bruno'],
             default='tf',
             help='network choices')
     parser.add_argument(
@@ -33,13 +33,18 @@ def get_args():
     parser.add_argument(
             "--batch_size",
             type=int,
-            default='256',
+            default='128',
             help='batch size')
     parser.add_argument(
             "--model_size",
             type=int,
             default='512',
             help='internal channel dimension')
+    parser.add_argument(
+            "--num_heads",
+            type=int,
+            default='4',
+            help='number of heads in TF-based models')
     parser.add_argument(
             "--digits",
             type=int,
