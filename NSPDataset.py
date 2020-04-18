@@ -88,8 +88,6 @@ class NSPDatasetAE(Dataset):
             pos = 1
             self.inputs[idx][0][Token.delim] = 1
             self.targets[idx][0] = Token.delim
-            print("Seq: ", seq)
-            print("Target: ", target)
             
             for i in range(self.numbers):
                 vec = num2vec(seq[i], ndigits, self.lendian)
@@ -111,11 +109,6 @@ class NSPDatasetAE(Dataset):
                 self.inputs[idx][pos+len(y)+1:,Token.pad] = 1
             
             self.iscreated[idx] = True
-            print("Input shape:", self.inputs[idx].shape)
-            # print(self.inputs[idx])
-            print("Target shape:", self.targets[idx].shape)
-            print("Inputs: ", self.inputs[idx])
-            print("Targets: ", self.targets[idx])
 
 
         return self.inputs[idx], self.targets[idx]
@@ -144,7 +137,6 @@ class NSPDatasetS2S(Dataset):
             seed1 = np.random.randint(10**(ndigits-1), 10**ndigits)
             seed2 = np.random.randint(10**(ndigits-1), 10**ndigits)
             seq, target = self.rule(seed1, seed2, self.numbers)
-            print("SEQ: ", seq)
             pos = 1
             self.inputs[idx][0] = Token.delim
             for i in range(self.numbers):
@@ -155,23 +147,14 @@ class NSPDatasetS2S(Dataset):
 
             self.targets[idx][:ndigits] = num2vec(target, ndigits, self.lendian)            
             self.iscreated[idx] = True
-            print("input: ", self.inputs[idx])
-            print("output: ", self.targets[idx])
         return self.inputs[idx], self.targets[idx]
 def printseq(x,y):
     tokenmap = ['0','1','2','3','4','5','6','7','8','9','_',' ','S','E','M','C']
-    print("input:")
     xseq = np.argmax(x,-1)
-    print('\t' + ' '.join([tokenmap[n] for n in xseq]))
-    print("target:")
-    print('\t' + ' '.join([tokenmap[n] for n in y]))
 
 def printseq2(x,y):
     tokenmap = ['0','1','2','3','4','5','6','7','8','9','_',' ','S','E','M','C']
-    print("input:")
-    print('\t' + ' '.join([tokenmap[n] for n in x]))
-    print("target:")
-    print('\t' + ' '.join([tokenmap[n] for n in y]))
+
 if __name__ == '__main__':
     
     dataset = NSPDatasetAE(fib,2,1, numbers=10)
