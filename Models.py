@@ -37,7 +37,7 @@ class TfAE(nn.Module):
         self.tfmodel = nn.TransformerEncoder(self.enclayer, num_layers=6, norm=self.norm)
         self.fc = nn.Linear(model_size, 16)
     #Batch-first in (N,S,C), batch-first out (N,C,S)
-    def forward(self, input):
+    def forward(self, input): 
         input2 = input.permute(1,0,2)
         ipos = torch.arange(input2.size(0), device=input.device)[:,None].expand(input2.shape[:2])
         src = self.embedding(input2) + self.posembed(ipos)

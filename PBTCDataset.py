@@ -3,6 +3,7 @@ import numpy as np
 from torchtext import data
 from collections import defaultdict
 from torch.utils.data import Dataset, DataLoader
+import torch
 
 """
     PBTCDataset
@@ -21,6 +22,7 @@ from torch.utils.data import Dataset, DataLoader
                 <bos> : Beginning of the sentence
                 <eos> : End of the sentence
                 <unk> : For unknown characters 
+                _     : Whitespace
 """
 class PBTCDataset(Dataset):
 
@@ -33,18 +35,46 @@ class PBTCDataset(Dataset):
         self.threshhold = THRESHOLD
         self.wordtoix, self.ixtoword = ixtoword, wordtoix
         self.textual_ids, self.vectorized_textual_ids = self.build_dictionary(ixtoword, wordtoix)
-        
+        self.maxLen = None
+        self.padded_ids = None
+
         print("Sample Data Loaded")
-        print(self.data[11])
+        print(self.data[124])
 
         print("Coverted into textual_ids")
-        print("0: <pad>, 1: <bos>, 2: <eos>, 3: <unk>")
-        print(self.textual_ids[11])
+        print("0: <pad>, 1: <bos>, 2: <eos>, 3: <unk>, 4: _, 99: mask")
+        print(self.textual_ids[124])
+
+        print("Start Padding to make every data have same length")
+        self.maxLen = self.getMaxLength(self.textual_ids) 
+        self.padded_ids = [self.pad_sequences(x, self.maxLen) for x in self.textual_ids]   
+        print(self.padded_ids[124])
+
+    def getMaxLength(self, list):
+        result = max(len(t) for t in list)
+        result = self.adjustMaxSize(result)
+        
+        return result
+    
+    ''' Torch size follows: (3n + 4) * 16 where n equals digits from system argument '''
+    def adjustMaxSize(self, a):
+        if a % 16 == 0 and (a /16 - 4)%3 == 0:
+            pass
+        else:
+            while (a % 16 != 0 or (a /16 - 4)%3 != 0):
+                a +=1
+        return a
+
+    def pad_sequences(self, x, max_len):
+        padded = np.zeros((max_len), dtype=np.int64)
+        if len(x) > max_len: padded[:] = x[:max_len]
+        else: padded[:len(x)] = x
+        return padded
 
     def build_dictionary(self, ixtoword, wordtoix):
         """ Add to dictionary """ 
         freqDict = defaultdict(int)
-        wordDict = {'<pad>':0, '<bos>':1, '<eos>':2, '<unk>':3}   
+        wordDict = {'<pad>':0, '<bos>':1, '<eos>':2, '<unk>':3, '_':4}   
 
         index = len(wordDict)
         for sen in self.data:
@@ -85,8 +115,8 @@ class PBTCDataset(Dataset):
                 else:   
                     temp.append(self.wordtoix.get('<unk>'))
                     vectorized_textual_ids.append(self.wordtoix.get('<unk>'))
-                textual_ids.append(temp)
             temp.append(self.wordtoix.get('<eos>'))
+            textual_ids.append(temp)
             vectorized_textual_ids.append(self.wordtoix.get('<eos>'))
         return textual_ids, vectorized_textual_ids
 
@@ -107,18 +137,38 @@ class PBTCDataset(Dataset):
         return corpus    
   
     def __getitem__(self, index):
-        x = self.vectorized_textual_ids[index]
-        target = self.vectorized_textual_ids[index + 1]
-        return x, target
+        x = self.padded_ids[index]
+        x = np.asarray(x, dtype=np.float32)
+        
+        x = x.reshape(len(x), 1)
+        x = x.reshape(int(x.shape[0]/16), 16)
+        
+        masked, target = self.splitWithMask(x)
+        target = self.pad_sequences(target, masked.shape[0])
+        target = np.asarray(target, dtype=np.long)
+
+        # print("input shape: ", masked.shape)
+        # print("target shape: ", target.shape)
+        
+        return masked, target
 
     def __len__(self):
-        print("Total len of dataset: ", len(self.vectorized_textual_ids))
-        return len(self.vectorized_textual_ids)
+        return len(self.textual_ids)
+    
+    ############################################
+    # Toy problem. All whitespace is now masked. 
+    # More rules can be added here 
+    ############################################
+    def splitWithMask(self, arr):
+        answer = list()
+        for i, row in enumerate(arr):
+            for j, col in enumerate(row):
+                if col == 4:
+                    answer.append(col)
+                    arr[i][j] = 99.  # 99 is mask
+        return arr, answer
 
 if __name__ == '__main__':
-
     dataset = PBTCDataset('train') # Use among 'train', 'valid', 'test'
-    dataset.__len__()
-    dataset.__getitem__(11)
-
+    dataset.__getitem__(124)
     loader = DataLoader(dataset, batch_size=4)
