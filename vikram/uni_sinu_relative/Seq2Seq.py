@@ -2,11 +2,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 import argparse
-import Options
+from Options import get_args
 import Models
-import Nam
-from NSPDataset import NSPDatasetAE, Token, fib, arith, palindrome
-from PBTCDataset import PBTCDataset
+from NSPDataset import NSPDatasetS2S, Token, fib, arith, palindrome
 from torch.utils.data import Dataset, DataLoader
 
 def train(model, trainloader, criterion, optimizer, scheduler):
@@ -17,10 +15,11 @@ def train(model, trainloader, criterion, optimizer, scheduler):
         for x,y in trainloader:
             xdata       = x.cuda()
             ydata       = y.cuda()
+            tgt         = torch.ones_like(ydata)*Token.start
+            tgt[:,1:]   = ydata[:,:-1]
             optimizer.zero_grad()
             
-            output      = model(xdata)
-            
+            output      = model(xdata, tgt)
             loss        = criterion(output, ydata)
             loss.backward()
             tloss       = tloss + loss.item()
@@ -49,7 +48,9 @@ def validate(model, valloader, args):
             xdata       = x.cuda()
             ydata2      = y.cuda()
             shard       = (3*i)//len(valloader)
-            output      = model(xdata)
+            tgt         = torch.ones_like(ydata2)*Token.start
+            tgt[:,1:]   = ydata2[:,:-1]
+            output      = model(xdata, tgt)
             pred2       = output.argmax(axis=1)
             seqcorrect  = (pred2==ydata2).prod(-1)
             vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
@@ -66,50 +67,21 @@ def validate(model, valloader, args):
 
 if __name__ == '__main__':
     
-    args = Options.get_args()
+    args = get_args()
 
-    if args.net == 'tf':
-        print('Executing Autoencoder model with TfAE Model')
-        model = Models.TfAE(args.model_size, nhead=args.num_heads).cuda()
-    elif args.net == 'cnn':
-        print('Executing Autoencoder model with CNNAE Model')
-        model = Models.CNNAE(args.model_size).cuda()
-    elif args.net == 'xlnet':
-        print('Executing Autoencoder model with XLNet-like Model')
-        model = Models.XLNetAE(args.model_size, nhead=args.num_heads).cuda()
-    elif args.net == 'nam':
-        print('Executing Autoencoder model with Nam\'s Architecture')
-        model = Nam.GRUTFAE(args.model_size, nhead=args.num_heads).cuda()
-    elif args.net == 'gru':
-        print('Executing Autoencoder model with GRU w.o. Attention')
-        model = Models.GRUAE(args.model_size).cuda()
-    else :
-        print('Network {} not supported'.format(args.net))
-        exit()
+    print('Executing Seq2Seq model with TfS2S Model')
+    epoch = args.epochs
 
-    if args.seq_type == 'fib':
-        dataset     = NSPDatasetAE(fib, args.digits, size=args.train_size)
-        valset      = NSPDatasetAE(fib, args.digits+1, args.digits-1, size=args.validation_size)
-    elif args.seq_type == 'arith':
-        dataset     = NSPDatasetAE(arith, args.digits, size=args.train_size)
-        valset      = NSPDatasetAE(arith, args.digits+1, args.digits-1, size=args.validation_size)
-    elif args.seq_type == 'palin':
-        dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
-        valset      = NSPDatasetAE(palindrome, args.digits+1, args.digits-1, numbers=1, size=args.validation_size)
-    elif args.seq_type == 'pbtc':
-        dataset     = PBTCDataset('train') 
-        valset      = PBTCDataset('test') 
-    else :
-        print('Sequence type {} not supported yet'.format(args.seq_type))
-        exit()
-
+    model       = Models.TfS2S(args.model_size).cuda()
+    dataset     = NSPDatasetS2S(fib, args.digits, size=args.train_size)
+    valset      = NSPDatasetS2S(fib, args.digits+1, args.digits-1, size=args.validation_size)
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     valloader   = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
-    optimizer   = torch.optim.Adam(model.parameters(), lr=args.lr)
-    scheduler   = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.97)
+    optimizer   = torch.optim.Adam(model.parameters(), lr=1e-4)
+    scheduler   = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.96)
     criterion   = nn.CrossEntropyLoss()
 
-    for e in range(args.epochs):
+    for e in range(epoch):
         print('\nEpoch #{}:'.format(e+1))
         
         #train the model

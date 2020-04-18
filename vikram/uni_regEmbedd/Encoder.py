@@ -69,7 +69,7 @@ class XLNetEncoderLayer(nn.Module):
         #self.posembed = nn.Embedding(2*maxlen, d_model)
         self.activation = nn.ReLU()
 
-    def forward(self, h,g,r, src_mask=None, src_key_padding_mask=None):
+    def forward(self, h,r, src_mask=None, src_key_padding_mask=None):
         r"""Pass the input through the encoder layer.
 
         Args:
@@ -84,20 +84,20 @@ class XLNetEncoderLayer(nn.Module):
         #klen = h.shape[0]
         #ipos = torch.arange(self.maxlen-klen, self.maxlen+klen, device=h.device)
         #r = self.posembed(ipos[:,None].expand(2*klen,h.shape[1]))
-        h2, g2 = self.self_attn(h, g, r)
+        h2, g2 = self.self_attn(h, r)
         h = h + self.dropout1(h2)
-        g = g + self.dropout1(g2)
+        #g = g + self.dropout1(g2)
         h = self.norm1(h)
-        g = self.norm1(g)
+        #g = self.norm1(g)
         if hasattr(self, "activation"):
             h2 = self.linear2(self.dropout(self.activation(self.linear1(h))))
-            g2 = self.linear2(self.dropout(self.activation(self.linear1(g))))
+            #g2 = self.linear2(self.dropout(self.activation(self.linear1(g))))
         else:  # for backward compatibility
             h2 = self.linear2(self.dropout(F.relu(self.linear1(h))))
-            g2 = self.linear2(self.dropout(F.relu(self.linear1(g))))
+            #g2 = self.linear2(self.dropout(F.relu(self.linear1(g))))
         h = h + self.dropout2(h2)
-        g = g + self.dropout2(g2)
+        #g = g + self.dropout2(g2)
         h = self.norm2(h)
-        g = self.norm2(g)
-        return h,g
+        #g = self.norm2(g)
+        return h #,g
 

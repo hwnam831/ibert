@@ -12,8 +12,8 @@ def get_args():
     parser.add_argument(
             "--net",
             type=str,
-            choices=['tf', 'cnn', 'gru', 'xlnet', 'nam', 'noor', 'lan', 'vikram', 'bruno'],
-            default='tf',
+            choices=['tf', 'cnn', 'xlnet', 'nam', 'noor', 'lan', 'vikram', 'bruno'],
+            default='xlnet',
             help='network choices')
     parser.add_argument(
             "--epochs",
@@ -53,9 +53,9 @@ def get_args():
     parser.add_argument(
             "--seq_type",
             type=str,
-            choices= ['fib', 'arith', 'palin', 'pbtc'],
+            choices= ['fib', 'arith', 'palin'],
             default='fib',
-            help='fib: fibonacci / arith: arithmetic / palin: palindrome / pbtc: PennTreeBank Character')
+            help='fib: fibonacci / arith: arithmetic / palin: palindrome')
     parser.add_argument(
             "--lr",
             type=float,

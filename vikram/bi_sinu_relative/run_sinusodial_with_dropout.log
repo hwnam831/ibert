@@ -1,0 +1,404 @@
+python AutoEncode.py 
+Executing Autoencoder model with XLNet-like Model
+
+Epoch #1:
+train seq acc:	0.026640625
+train loss:	0.39668702587485316
+Current LR:9.7e-05
+val accuracy at 4 digits = 0.0
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #2:
+train seq acc:	0.1125
+train loss:	0.34992689564824103
+Current LR:9.409e-05
+val accuracy at 4 digits = 0.00390625
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #3:
+train seq acc:	0.2086328125
+train loss:	0.29720397643744945
+Current LR:9.12673e-05
+val accuracy at 4 digits = 0.0078125
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #4:
+train seq acc:	0.287421875
+train loss:	0.19011045556515455
+Current LR:8.8529281e-05
+val accuracy at 4 digits = 0.01953125
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #5:
+train seq acc:	0.4796875
+train loss:	0.10174585662782193
+Current LR:8.587340257e-05
+val accuracy at 4 digits = 0.0234375
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #6:
+train seq acc:	0.7728125
+train loss:	0.0421046856045723
+Current LR:8.329720049289999e-05
+val accuracy at 4 digits = 0.0390625
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #7:
+train seq acc:	0.8928515625
+train loss:	0.02047487132018432
+Current LR:8.079828447811299e-05
+val accuracy at 4 digits = 0.1953125
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #8:
+train seq acc:	0.9298828125
+train loss:	0.013691456201486289
+Current LR:7.83743359437696e-05
+val accuracy at 4 digits = 0.109375
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #9:
+train seq acc:	0.953203125
+train loss:	0.009115355948451906
+Current LR:7.602310586545651e-05
+val accuracy at 4 digits = 0.47265625
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #10:
+train seq acc:	0.9608984375
+train loss:	0.007672367242048494
+Current LR:7.374241268949281e-05
+val accuracy at 4 digits = 0.39453125
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #11:
+train seq acc:	0.9678125
+train loss:	0.006481320820748806
+Current LR:7.153014030880803e-05
+val accuracy at 4 digits = 0.328125
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #12:
+train seq acc:	0.9690234375
+train loss:	0.006261991570936516
+Current LR:6.938423609954378e-05
+val accuracy at 4 digits = 0.5
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #13:
+train seq acc:	0.97515625
+train loss:	0.004768470402050298
+Current LR:6.730270901655746e-05
+val accuracy at 4 digits = 0.1953125
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #14:
+train seq acc:	0.97609375
+train loss:	0.004717369589197915
+Current LR:6.528362774606073e-05
+val accuracy at 4 digits = 0.51171875
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #15:
+train seq acc:	0.9806640625
+train loss:	0.003869427828467451
+Current LR:6.332511891367892e-05
+val accuracy at 4 digits = 0.12109375
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #16:
+train seq acc:	0.9829296875
+train loss:	0.003306501048791688
+Current LR:6.142536534626855e-05
+val accuracy at 4 digits = 0.203125
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #17:
+train seq acc:	0.9838671875
+train loss:	0.0032325382009730673
+Current LR:5.9582604385880494e-05
+val accuracy at 4 digits = 0.17578125
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #18:
+train seq acc:	0.98328125
+train loss:	0.0034380112212966194
+Current LR:5.7795126254304074e-05
+val accuracy at 4 digits = 0.16015625
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #19:
+train seq acc:	0.9875390625
+train loss:	0.0025918565175379626
+Current LR:5.606127246667495e-05
+val accuracy at 4 digits = 0.52734375
+val accuracy at 5 digits = 0.01171875
+val accuracy at 6 digits = 0.0
+
+Epoch #20:
+train seq acc:	0.9869140625
+train loss:	0.0025117741369467695
+Current LR:5.43794342926747e-05
+val accuracy at 4 digits = 0.3515625
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #21:
+train seq acc:	0.9868359375
+train loss:	0.0024691459014138674
+Current LR:5.274805126389446e-05
+val accuracy at 4 digits = 0.3671875
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #22:
+train seq acc:	0.9896484375
+train loss:	0.0021194676719460404
+Current LR:5.116560972597762e-05
+val accuracy at 4 digits = 0.2265625
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #23:
+train seq acc:	0.99
+train loss:	0.002107812880567508
+Current LR:4.963064143419829e-05
+val accuracy at 4 digits = 0.6875
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #24:
+train seq acc:	0.9912890625
+train loss:	0.0019002922473009675
+Current LR:4.814172219117234e-05
+val accuracy at 4 digits = 0.65234375
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #25:
+train seq acc:	0.99234375
+train loss:	0.0016105009077000431
+Current LR:4.669747052543717e-05
+val accuracy at 4 digits = 0.26171875
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #26:
+train seq acc:	0.99125
+train loss:	0.0017879749556595926
+Current LR:4.529654640967405e-05
+val accuracy at 4 digits = 0.265625
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #27:
+train seq acc:	0.9913671875
+train loss:	0.0018596580389566952
+Current LR:4.393765001738383e-05
+val accuracy at 4 digits = 0.57421875
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #28:
+train seq acc:	0.99296875
+train loss:	0.00138848845850589
+Current LR:4.261952051686232e-05
+val accuracy at 4 digits = 0.62890625
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #29:
+train seq acc:	0.99390625
+train loss:	0.0013131573779537576
+Current LR:4.1340934901356445e-05
+val accuracy at 4 digits = 0.734375
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #30:
+train seq acc:	0.9930859375
+train loss:	0.001587624409912678
+Current LR:4.0100706854315754e-05
+val accuracy at 4 digits = 0.0
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #31:
+train seq acc:	0.9939453125
+train loss:	0.0012177214084294974
+Current LR:3.8897685648686275e-05
+val accuracy at 4 digits = 0.24609375
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #32:
+train seq acc:	0.9948828125
+train loss:	0.0011790834534986061
+Current LR:3.773075507922569e-05
+val accuracy at 4 digits = 0.49609375
+val accuracy at 5 digits = 0.01171875
+val accuracy at 6 digits = 0.0
+
+Epoch #33:
+train seq acc:	0.99546875
+train loss:	0.0008415953544317745
+Current LR:3.659883242684892e-05
+val accuracy at 4 digits = 0.578125
+val accuracy at 5 digits = 0.01171875
+val accuracy at 6 digits = 0.0
+
+Epoch #34:
+train seq acc:	0.99453125
+train loss:	0.001272546242144017
+Current LR:3.550086745404345e-05
+val accuracy at 4 digits = 0.80078125
+val accuracy at 5 digits = 0.0078125
+val accuracy at 6 digits = 0.0
+
+Epoch #35:
+train seq acc:	0.996015625
+train loss:	0.0008622178523910406
+Current LR:3.443584143042214e-05
+val accuracy at 4 digits = 0.87109375
+val accuracy at 5 digits = 0.0078125
+val accuracy at 6 digits = 0.0
+
+Epoch #36:
+train seq acc:	0.99625
+train loss:	0.0009135102655091032
+Current LR:3.340276618750948e-05
+val accuracy at 4 digits = 0.59375
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #37:
+train seq acc:	0.9964453125
+train loss:	0.0007505417961692728
+Current LR:3.2400683201884194e-05
+val accuracy at 4 digits = 0.52734375
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #38:
+train seq acc:	0.99671875
+train loss:	0.0007422960262192646
+Current LR:3.1428662705827665e-05
+val accuracy at 4 digits = 0.69140625
+val accuracy at 5 digits = 0.0078125
+val accuracy at 6 digits = 0.0
+
+Epoch #39:
+train seq acc:	0.99546875
+train loss:	0.0009707890747813508
+Current LR:3.048580282465283e-05
+val accuracy at 4 digits = 0.109375
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #40:
+train seq acc:	0.9959765625
+train loss:	0.0008342110779085487
+Current LR:2.957122873991325e-05
+val accuracy at 4 digits = 0.5078125
+val accuracy at 5 digits = 0.015625
+val accuracy at 6 digits = 0.0
+
+Epoch #41:
+train seq acc:	0.9960546875
+train loss:	0.0008128205815046385
+Current LR:2.8684091877715853e-05
+val accuracy at 4 digits = 0.41015625
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #42:
+train seq acc:	0.9970703125
+train loss:	0.0006554017698908865
+Current LR:2.7823569121384373e-05
+val accuracy at 4 digits = 0.5234375
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #43:
+train seq acc:	0.995390625
+train loss:	0.0009812648216575325
+Current LR:2.698886204774284e-05
+val accuracy at 4 digits = 0.3046875
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #44:
+train seq acc:	0.9980078125
+train loss:	0.00048771506335469893
+Current LR:2.6179196186310556e-05
+val accuracy at 4 digits = 0.234375
+val accuracy at 5 digits = 0.00390625
+val accuracy at 6 digits = 0.0
+
+Epoch #45:
+train seq acc:	0.99765625
+train loss:	0.0005312572364982771
+Current LR:2.539382030072124e-05
+val accuracy at 4 digits = 0.3046875
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #46:
+train seq acc:	0.9968359375
+train loss:	0.0006855926049138361
+Current LR:2.46320056916996e-05
+val accuracy at 4 digits = 0.44921875
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #47:
+train seq acc:	0.997421875
+train loss:	0.0005665879919069994
+Current LR:2.3893045520948613e-05
+val accuracy at 4 digits = 0.16796875
+val accuracy at 5 digits = 0.0
+val accuracy at 6 digits = 0.0
+
+Epoch #48:
+train seq acc:	0.996171875
+train loss:	0.0008012245938152773
+Current LR:2.3176254155320155e-05
+val accuracy at 4 digits = 0.8515625
+val accuracy at 5 digits = 0.0078125
+val accuracy at 6 digits = 0.0
+
+Epoch #49:
+train seq acc:	0.9976953125
+train loss:	0.0005694307263456722
+Current LR:2.2480966530660545e-05
+val accuracy at 4 digits = 0.3046875
+val accuracy at 5 digits = 0.015625
+val accuracy at 6 digits = 0.0
+
+Epoch #50:
+train seq acc:	0.9978125
+train loss:	0.0004800247566799953
+Current LR:2.1806537534740732e-05
+val accuracy at 4 digits = 0.36328125
+val accuracy at 5 digits = 0.01953125
+val accuracy at 6 digits = 0.0
+Done
+

@@ -81,7 +81,7 @@ class NSPDatasetAE(Dataset):
 
     def __getitem__(self, idx):
         if not self.iscreated[idx]:
-            ndigits = np.random.randint(self.mindigits, self.maxdigits+1)
+            ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
             seed1 = np.random.randint(10**(ndigits-1), 10**ndigits)
             seed2 = np.random.randint(10**(ndigits-1), 10**ndigits)
             seq, target = self.rule(seed1, seed2, self.numbers)
@@ -131,7 +131,7 @@ class NSPDatasetS2S(Dataset):
 
     def __getitem__(self, idx):
         if not self.iscreated[idx]:
-            ndigits = np.random.randint(self.mindigits, self.maxdigits+1)
+            ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
             seed1 = np.random.randint(10**(ndigits-1), 10**ndigits)
             seed2 = np.random.randint(10**(ndigits-1), 10**ndigits)
             seq, target = self.rule(seed1, seed2, self.numbers)
@@ -162,7 +162,7 @@ def printseq2(x,y):
     print("target:")
     print('\t' + ' '.join([tokenmap[n] for n in y]))
 if __name__ == '__main__':
-    dataset = NSPDatasetS2S(fib,5)
+    dataset = NSPDatasetS2S(palindrome,5,4, numbers=1)
     loader = DataLoader(dataset, batch_size=4)
     for i in range(10):
         x,y = dataset.__getitem__(i)
