@@ -6,6 +6,7 @@ import Options
 import Models
 import Nam
 from NSPDataset import NSPDatasetAE, Token, fib, arith, palindrome
+from PBTCDataset import PBTCDataset
 from torch.utils.data import Dataset, DataLoader
 
 def train(model, trainloader, criterion, optimizer, scheduler):
@@ -19,6 +20,7 @@ def train(model, trainloader, criterion, optimizer, scheduler):
             optimizer.zero_grad()
             
             output      = model(xdata)
+            
             loss        = criterion(output, ydata)
             loss.backward()
             tloss       = tloss + loss.item()
@@ -94,6 +96,9 @@ if __name__ == '__main__':
     elif args.seq_type == 'palin':
         dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
         valset      = NSPDatasetAE(palindrome, args.digits+1, args.digits-1, numbers=1, size=args.validation_size)
+    elif args.seq_type == 'pbtc':
+        dataset     = PBTCDataset('train') 
+        valset      = PBTCDataset('test') 
     else :
         print('Sequence type {} not supported yet'.format(args.seq_type))
         exit()

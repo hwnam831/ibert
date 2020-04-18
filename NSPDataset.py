@@ -109,6 +109,8 @@ class NSPDatasetAE(Dataset):
                 self.inputs[idx][pos+len(y)+1:,Token.pad] = 1
             
             self.iscreated[idx] = True
+
+
         return self.inputs[idx], self.targets[idx]
 
 #Seq2Seq version + no one-hot encoding
@@ -137,7 +139,6 @@ class NSPDatasetS2S(Dataset):
             seq, target = self.rule(seed1, seed2, self.numbers)
             pos = 1
             self.inputs[idx][0] = Token.delim
-            
             for i in range(self.numbers):
                 vec = num2vec(seq[i], ndigits, self.lendian)
                 self.inputs[idx][pos:pos+ndigits] = vec
@@ -149,23 +150,18 @@ class NSPDatasetS2S(Dataset):
         return self.inputs[idx], self.targets[idx]
 def printseq(x,y):
     tokenmap = ['0','1','2','3','4','5','6','7','8','9','_',' ','S','E','M','C']
-    print("input:")
     xseq = np.argmax(x,-1)
-    print('\t' + ' '.join([tokenmap[n] for n in xseq]))
-    print("target:")
-    print('\t' + ' '.join([tokenmap[n] for n in y]))
 
 def printseq2(x,y):
     tokenmap = ['0','1','2','3','4','5','6','7','8','9','_',' ','S','E','M','C']
-    print("input:")
-    print('\t' + ' '.join([tokenmap[n] for n in x]))
-    print("target:")
-    print('\t' + ' '.join([tokenmap[n] for n in y]))
+
 if __name__ == '__main__':
-    dataset = NSPDatasetS2S(palindrome,5,4, numbers=1)
+    
+    dataset = NSPDatasetAE(fib,2,1, numbers=10)
+    # dataset = NSPDatasetS2S(fib,2,1, numbers=1)
     loader = DataLoader(dataset, batch_size=4)
     for i in range(10):
         x,y = dataset.__getitem__(i)
-        printseq2(x,y)
-        #print(np.argmax(x,-1))
-        #print(y)
+        # printseq2(x,y)
+        # print(np.argmax(x,-1))
+        # print(y)
