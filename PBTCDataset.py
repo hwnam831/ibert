@@ -5,6 +5,7 @@ from collections import defaultdict
 from torch.utils.data import Dataset, DataLoader
 import torch
 
+
 """
     PBTCDataset
         Input:
@@ -30,23 +31,25 @@ class PBTCDataset(Dataset):
         'data/pennchar/valid.txt',
         'data/pennchar/test.txt']
 
-    def __init__(self, dataType, ixtoword=None, wordtoix=None, THRESHOLD=5):
+    def __init__(self, dataType, ixtoword=None, wordtoix=None, minSeq = 16, maxSeq = 128, THRESHOLD=5):
+        self.minSeq = minSeq
+        self.maxLen = maxSeq
         self.data = self.loadData(dataType)        
+
         self.threshhold = THRESHOLD
-        self.wordtoix, self.ixtoword = ixtoword, wordtoix
-        self.textual_ids, self.vectorized_textual_ids = self.build_dictionary(ixtoword, wordtoix)
-        self.maxLen = None
+        self.wordtoix, self.ixtoword = wordtoix, ixtoword
+        self.textual_ids = self.build_dictionary()
         self.padded_ids = None
+        self.vocab_size = len(self.wordtoix)
 
         print("Sample Data Loaded")
         print(self.data[124])
 
         print("Coverted into textual_ids")
-        print("0: <pad>, 1: <bos>, 2: <eos>, 3: <unk>, 4: _, 99: mask")
+        print("0: <pad>, 1: <bos>, 2: <eos>, 3: <unk>, 4: _, 5: <mask>, 6~:abcd...z + special")
         print(self.textual_ids[124])
 
         print("Start Padding to make every data have same length")
-        self.maxLen = self.getMaxLength(self.textual_ids) 
         self.padded_ids = [self.pad_sequences(x, self.maxLen) for x in self.textual_ids]   
         print(self.padded_ids[124])
 
@@ -71,25 +74,23 @@ class PBTCDataset(Dataset):
         else: padded[:len(x)] = x
         return padded
 
-    def build_dictionary(self, ixtoword, wordtoix):
+    def build_dictionary(self):
         """ Add to dictionary """ 
         freqDict = defaultdict(int)
-        wordDict = {'<pad>':0, '<bos>':1, '<eos>':2, '<unk>':3, '_':4}   
+        wordDict = defaultdict(str)
+        ixtoword = defaultdict(int)
+        #{'<pad>':0, '<bos>':1, '<eos>':2, '<unk>': 3, '_':4, 'mask': 5}   
 
-        index = len(wordDict)
-        for sen in self.data:
-            for c in sen:
-                freqDict[c] += 1
-                wordDict[c] = index
-                index += 1
+        with io.open('dicts.txt', encoding='UTF-8') as f:
+            for i, line in enumerate(f):    
+                for c in line.split(' '):
+                    wordDict[c.rstrip('\n')] = i
+                ixtoword[i] = line.split(' ')[0].rstrip('\n')
 
         """ Build text <-> textual id Dictionary """ 
-        if ixtoword == None or wordtoix == None:
-            self.wordtoix = {word: i for i, word in enumerate(wordDict)}
+        if self.ixtoword == None or self.wordtoix == None:
+            self.wordtoix = wordDict
             self.ixtoword = {i: word for i, word in enumerate(wordDict)}
-        else:
-            self.ixtoword = ixtoword
-            self.wordtoix = wordtoix
 
         """ 
             Convert full text into textual ids 
@@ -103,22 +104,17 @@ class PBTCDataset(Dataset):
                             [  '<bos>', 'a', 'b', 'c', '<eos>', '<bos>', 'a', 'b', 'c', <eos> ]
         """
         textual_ids = list()
-        vectorized_textual_ids = list()        
         for i in range(0, len(self.data)):  
             temp = list()
             temp.append(self.wordtoix.get('<bos>'))
-            vectorized_textual_ids.append(self.wordtoix.get('<bos>'))
             for word in self.data[i]:
                 if word in self.wordtoix:
                     temp.append(self.wordtoix.get(word)) 
-                    vectorized_textual_ids.append(self.wordtoix.get(word)) 
                 else:   
-                    temp.append(self.wordtoix.get('<unk>'))
-                    vectorized_textual_ids.append(self.wordtoix.get('<unk>'))
+                    temp.append(self.wordtoix.get('<etc>'))
             temp.append(self.wordtoix.get('<eos>'))
             textual_ids.append(temp)
-            vectorized_textual_ids.append(self.wordtoix.get('<eos>'))
-        return textual_ids, vectorized_textual_ids
+        return textual_ids 
 
     def loadData(self, dataType):
         """ Load path of text file """         
@@ -133,42 +129,57 @@ class PBTCDataset(Dataset):
         corpus = list()
         with io.open(f, encoding='UTF-8') as f:
             for line in f:    
-                corpus.append(line.rstrip().split(' '))
+                if len(line) > self.minSeq and len(line) < self.maxLen:
+                    corpus.append(line.rstrip().split(' '))
         return corpus    
   
+    def onehot_encoder(self, idxs):
+        vec = np.zeros([self.maxLen, self.vocab_size], dtype=np.float32)
+        for i, id in enumerate(idxs):
+            vec[i, id] = 1
+        return vec
+
     def __getitem__(self, index):
         x = self.padded_ids[index]
-        x = np.asarray(x, dtype=np.float32)
-        
-        x = x.reshape(len(x), 1)
-        x = x.reshape(int(x.shape[0]/16), 16)
-        
+        # x = np.asarray(x, dtype=np.float32)
+
+
         masked, target = self.splitWithMask(x)
         target = self.pad_sequences(target, masked.shape[0])
-        target = np.asarray(target, dtype=np.long)
 
-        # print("input shape: ", masked.shape)
-        # print("target shape: ", target.shape)
-        
+        masked = self.onehot_encoder(masked)
+        # target = self.onehot_encoder(target)
+
         return masked, target
 
     def __len__(self):
         return len(self.textual_ids)
     
     ############################################
-    # Toy problem. All whitespace is now masked. 
-    # More rules can be added here 
+    # Mask Last Word
     ############################################
-    def splitWithMask(self, arr):
-        answer = list()
-        for i, row in enumerate(arr):
-            for j, col in enumerate(row):
-                if col == 4:
-                    answer.append(col)
-                    arr[i][j] = 99.  # 99 is mask
-        return arr, answer
+    def splitWithMask(self, idxs):
+        whiteSpaceIdx = None
+        eosIdx = None
+        masked = np.asarray([i for i in idxs])
+        
+        for i, v in enumerate(idxs):
+            if v == self.wordtoix.get('_'):
+                whiteSpaceIdx = i
+            if v == self.wordtoix.get('<eos>'):
+                eosIdx = i       
+
+        # Mask last word
+        if whiteSpaceIdx is not None:
+            masked[whiteSpaceIdx: eosIdx] = self.wordtoix.get('<mask>')
+            return masked, idxs
+        
+        # If there is one word, return original file. eg) Hello 
+        else:
+            return idxs, idxs
 
 if __name__ == '__main__':
     dataset = PBTCDataset('train') # Use among 'train', 'valid', 'test'
     dataset.__getitem__(124)
     loader = DataLoader(dataset, batch_size=4)
+    print(dataset.wordtoix)

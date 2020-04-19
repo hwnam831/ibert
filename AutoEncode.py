@@ -68,24 +68,6 @@ if __name__ == '__main__':
     
     args = Options.get_args()
 
-    if args.net == 'tf':
-        print('Executing Autoencoder model with TfAE Model')
-        model = Models.TfAE(args.model_size, nhead=args.num_heads).cuda()
-    elif args.net == 'cnn':
-        print('Executing Autoencoder model with CNNAE Model')
-        model = Models.CNNAE(args.model_size).cuda()
-    elif args.net == 'xlnet':
-        print('Executing Autoencoder model with XLNet-like Model')
-        model = Models.XLNetAE(args.model_size, nhead=args.num_heads).cuda()
-    elif args.net == 'nam':
-        print('Executing Autoencoder model with Nam\'s Architecture')
-        model = Nam.GRUTFAE(args.model_size, nhead=args.num_heads).cuda()
-    elif args.net == 'gru':
-        print('Executing Autoencoder model with GRU w.o. Attention')
-        model = Models.GRUAE(args.model_size).cuda()
-    else :
-        print('Network {} not supported'.format(args.net))
-        exit()
 
     if args.seq_type == 'fib':
         dataset     = NSPDatasetAE(fib, args.digits, size=args.train_size)
@@ -97,10 +79,34 @@ if __name__ == '__main__':
         dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
         valset      = NSPDatasetAE(palindrome, args.digits+1, args.digits-1, numbers=1, size=args.validation_size)
     elif args.seq_type == 'pbtc':
-        dataset     = PBTCDataset('train') 
-        valset      = PBTCDataset('test') 
+        dataset     = PBTCDataset('train', minSeq = 16, maxSeq = 64) 
+        valset      = PBTCDataset('test', minSeq = 64, maxSeq = 128) 
     else :
         print('Sequence type {} not supported yet'.format(args.seq_type))
+        exit()
+
+    if args.seq_type == 'pbtc': 
+        vocab_size = dataset.vocab_size
+    else:
+        vocab_size = 16
+
+    if args.net == 'tf':
+        print('Executing Autoencoder model with TfAE Model')
+        model = Models.TfAE(args.model_size, nhead=args.num_heads, vocab_size = vocab_size).cuda()
+    elif args.net == 'cnn':
+        print('Executing Autoencoder model with CNNAE Model')
+        model = Models.CNNAE(args.model_size, vocab_size = vocab_size).cuda()
+    elif args.net == 'xlnet':
+        print('Executing Autoencoder model with XLNet-like Model')
+        model = Models.XLNetAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
+    elif args.net == 'nam':
+        print('Executing Autoencoder model with Nam\'s Architecture')
+        model = Nam.GRUTFAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
+    elif args.net == 'gru':
+        print('Executing Autoencoder model with GRU w.o. Attention')
+        model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()
+    else :
+        print('Network {} not supported'.format(args.net))
         exit()
 
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
