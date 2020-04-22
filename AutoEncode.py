@@ -105,6 +105,9 @@ if __name__ == '__main__':
     elif args.net == 'gru':
         print('Executing Autoencoder model with GRU w.o. Attention')
         model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()
+    elif args.net == 'lstm':
+        print('Executing Autoencoder model with LSTM including Attention')
+        model = Nam.LSTMAE(args.model_size, vocab_size = vocab_size).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()

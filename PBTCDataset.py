@@ -1,6 +1,6 @@
 import io  
 import numpy as np
-from torchtext import data
+#from torchtext import data
 from collections import defaultdict
 from torch.utils.data import Dataset, DataLoader
 import torch
