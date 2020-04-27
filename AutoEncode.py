@@ -5,6 +5,7 @@ import argparse
 import Options
 import Models
 import Nam
+import Vikram
 from NSPDataset import NSPDatasetAE, Token, fib, arith, palindrome
 from PBTCDataset import PBTCDataset
 from torch.utils.data import Dataset, DataLoader
@@ -102,6 +103,9 @@ if __name__ == '__main__':
     elif args.net == 'nam':
         print('Executing Autoencoder model with Nam\'s Architecture')
         model = Nam.GRUTFAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
+    elif args.net == 'vikram':
+        print('Executing Autoencoder model with Vikram\'s Architecture')
+        model = Vikram.VikramAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
     elif args.net == 'gru':
         print('Executing Autoencoder model with GRU w.o. Attention')
         model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()
