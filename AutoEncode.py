@@ -5,6 +5,7 @@ import argparse
 import Options
 import Models
 import Nam
+import Vikram
 from NSPDataset import NSPDatasetAE, Token, fib, arith, palindrome
 from PBTCDataset import PBTCDataset
 from torch.utils.data import Dataset, DataLoader
@@ -94,16 +95,19 @@ if __name__ == '__main__':
 
     if args.net == 'tf':
         print('Executing Autoencoder model with TfAE Model')
-        model = Models.TfAE(args.model_size, nhead=args.num_heads, vocab_size = vocab_size).cuda()
+        model = Models.TfAE(args.model_size, nhead=args.num_heads, num_layers=args.num_layers, vocab_size = vocab_size).cuda()
     elif args.net == 'cnn':
         print('Executing Autoencoder model with CNNAE Model')
         model = Models.CNNAE(args.model_size, vocab_size = vocab_size).cuda()
     elif args.net == 'xlnet':
         print('Executing Autoencoder model with XLNet-like Model')
-        model = Models.XLNetAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
+        model = Models.XLNetAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'nam':
         print('Executing Autoencoder model with Nam\'s Architecture')
-        model = Nam.NamAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
+        model = Nam.NamAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
+    elif args.net == 'vikram':
+        print('Executing Autoencoder model with Vikram\'s Architecture')
+        model = Vikram.VikramAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
     elif args.net == 'gru':
         print('Executing Autoencoder model with GRU w.o. Attention')
         model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()
