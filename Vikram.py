@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from Encoder import XLNetEncoderLayer
 from torch.nn import functional as F
 from torch.nn.init import xavier_uniform_
 from torch.nn.init import constant_
@@ -111,11 +110,51 @@ class RelativeAttention(nn.Module):
         return output_h
 
 class NamEncoderLayer(nn.Module):
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation="relu", maxlen=128):
+        super().__init__()
+        self.self_attn = RelativeAttention(d_model, nhead, dropout=dropout)
+        # Implementation of Feedforward model
+        self.linear1 = nn.Linear(d_model, dim_feedforward)
+        self.dropout = nn.Dropout(dropout)
+        self.linear2 = nn.Linear(dim_feedforward, d_model)
+
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+        self.dropout1 = nn.Dropout(dropout)
+        self.dropout2 = nn.Dropout(dropout)
+        self.maxlen = maxlen
+        self.posembed = nn.Embedding(2*maxlen, d_model)
+        self.activation = nn.ReLU()
+
+    def forward(self, h, src_mask=None, src_key_padding_mask=None):
+        r"""Pass the input through the encoder layer.
+
+        Args:
+            src: packed two-stream h,g.
+            src_mask: the mask for the src sequence (optional).
+            src_key_padding_mask: the mask for the src keys per batch (optional).
+
+        Shape:
+            see the docs in Transformer class.
+        """
+        klen = h.shape[0]
+        ipos = torch.arange(self.maxlen-klen, self.maxlen+klen, device=h.device)
+        r = self.posembed(ipos[:,None].expand(2*klen,h.shape[1]))
+        h2 = self.self_attn(h, r)
+        h = h + self.dropout1(h2)
+        h = self.norm1(h)
+        h2 = self.linear2(self.dropout(F.relu(self.linear1(h))))
+        h = h + self.dropout2(h2)
+        h = self.norm2(h)
+
+        return h
+
+class VikEncoderLayer(nn.Module):
     def __init__(self, d_model, nhead, dropout=0.1):
         super().__init__()
         self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         assert d_model % 2 == 0
-        self.cell = nn.GRU(d_model, d_model//2, 1, bidirectional=True)
+        self.cell = nn.LSTM(d_model, d_model//2, 1, bidirectional=True)
         # Implementation of Feedforward model
         self.dropout = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
@@ -134,43 +173,19 @@ class NamEncoderLayer(nn.Module):
         return src
 
 
-class GRUEncoderLayer(nn.Module):
-    def __init__(self, d_model, nhead, dropout=0.1):
-        super().__init__()
-        self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
-        assert d_model % 2 == 0
-        self.cell = nn.GRU(d_model, d_model//2, 1, bidirectional=True)
-        # Implementation of Feedforward model
-        self.dropout = nn.Dropout(dropout)
-        self.norm1 = nn.LayerNorm(d_model)
-        self.norm2 = nn.LayerNorm(d_model)
-
-    def forward(self, src, src_mask=None, src_key_padding_mask=None):
-        
-        src2 = self.self_attn(src, src, src, attn_mask=src_mask,
-                              key_padding_mask=src_key_padding_mask)[0]
-        src = src + self.dropout(src2)
-        src = self.norm1(src)
-        src2 = self.cell(src)[0]
-        src = src + self.dropout(src2)
-        src = self.norm2(src)
-
-        return src
-
-
-class GRUTFAE(nn.Module):
-    def __init__(self, model_size=512, nhead=4, maxlen=128, vocab_size=16):
+class VikramAE(nn.Module):
+    def __init__(self, model_size=512, nhead=8, maxlen=128, vocab_size=16):
         super().__init__()
         self.model_size=model_size
         self.maxlen=maxlen
         self.vocab_size = vocab_size
         assert model_size % 2 == 0
-        self.embedding = nn.GRU(vocab_size, model_size//2, 1, bidirectional=True)
+        self.embedding = nn.LSTM(vocab_size, model_size//2, 1, bidirectional=True)
         self.posembed = nn.Embedding(maxlen, model_size)
-        self.enclayer = nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead)
+        self.enclayer = VikEncoderLayer(d_model=model_size, nhead=nhead)
         self.norm = nn.LayerNorm(model_size)
         self.tfmodel = nn.TransformerEncoder(self.enclayer, \
-            num_layers=6, norm=self.norm)
+            num_layers=8, norm=self.norm)
         self.fc = nn.Linear(model_size, vocab_size)
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input):
@@ -182,70 +197,21 @@ class GRUTFAE(nn.Module):
         return self.fc(out).permute(1,2,0)
 
 class NamAE(nn.Module):
-    def __init__(self, model_size=512, nhead=4, num_layers=12, vocab_size=16, dropout=0.2):
+    def __init__(self, model_size=512, maxlen=128, vocab_size=16):
         super().__init__()
         self.model_size=model_size
+        self.maxlen=maxlen
         self.vocab_size = vocab_size
-        assert model_size % 2 == 0
-        self.embedding = nn.GRU(vocab_size, model_size//2, 1, bidirectional=True)
-        self.dropout = nn.Dropout(dropout)
-        self.enclayer = nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout)
-        #self.enclayer = NamEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout)
+        self.embedding = nn.Linear(vocab_size, model_size)
+        self.posembed = nn.Embedding(maxlen, model_size)
+        self.enclayer = NamEncoderLayer(d_model=model_size, nhead=2)
         self.norm = nn.LayerNorm(model_size)
-        self.tfmodel = nn.TransformerEncoder(self.enclayer, \
-            num_layers=num_layers, norm=self.norm)
+        self.tfmodel = nn.TransformerEncoder(self.enclayer, num_layers=6, norm=self.norm)
         self.fc = nn.Linear(model_size, vocab_size)
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input):
         input2 = input.permute(1,0,2)
-        src = self.embedding(input2)[0]
-        out = self.tfmodel(self.dropout(src))
+        ipos = torch.arange(input2.size(0), device=input.device)[:,None].expand(input2.shape[:2])
+        src = self.embedding(input2) + self.posembed(ipos)
+        out = self.tfmodel(src)
         return self.fc(out).permute(1,2,0)
-
-# From https://github.com/pytorch/fairseq/blob/master/fairseq/models/lstm.py
-class AttentionLayer(nn.Module):
-    def __init__(self, input_embed_dim, source_embed_dim, output_embed_dim, bias=False):
-        super().__init__()
-
-        self.input_proj = nn.Linear(input_embed_dim, source_embed_dim, bias=bias)
-        self.output_proj = nn.Linear(input_embed_dim + source_embed_dim, output_embed_dim, bias=bias)
-
-    def forward(self, input, source_hids):
-        # input: tgtlen x bsz x input_embed_dim
-        # source_hids: srclen x bsz x source_embed_dim
-
-        # x: bsz x source_embed_dim
-        x = self.input_proj(input)
-
-        # compute attention
-        #attn_scores = (source_hids * x.unsqueeze(0)).sum(dim=2)
-        attn_scores = torch.einsum('sbh,tbh->tsb', source_hids, x)
-
-        attn_scores = F.softmax(attn_scores, dim=1)  # srclen x bsz
-
-        # sum weighted sources
-        #x = (attn_scores.unsqueeze(2) * source_hids).sum(dim=0)
-        x = torch.einsum('tsb, sbh->tbh',attn_scores, source_hids)
-
-        x = torch.tanh(self.output_proj(torch.cat((x, input), dim=-1)))
-        return x, attn_scores
-
-class LSTMAE(nn.Module):
-    def __init__(self, model_size, vocab_size=16):
-        super().__init__()
-        assert model_size %2 == 0
-        self.model_size = model_size
-        self.embed = nn.Linear(vocab_size, self.model_size)
-        self.encoder = nn.LSTM(self.model_size, self.model_size//2, 1, bidirectional=True)
-        self.dropout = nn.Dropout(0.1)
-        self.attn = AttentionLayer(model_size, model_size, model_size)
-        self.decoder = nn.LSTM(self.model_size, self.model_size//2, 1, bidirectional=True)
-        self.fc = nn.Linear(model_size, vocab_size)
-
-    def forward(self, input):
-        outputs = self.dropout(self.embed(input.permute(1,0,2)))
-        outputs, state = self.encoder(outputs)
-        outputs, _ = self.attn(outputs, outputs)
-        outputs, state = self.decoder(self.dropout(outputs))
-        return self.fc(self.dropout(outputs)).permute(1,2,0)
-
