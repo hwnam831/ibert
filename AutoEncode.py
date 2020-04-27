@@ -35,31 +35,33 @@ def train(model, trainloader, criterion, optimizer, scheduler):
 
         print('train seq acc:\t'+str(tcorrect/tlen))
         print('train loss:\t{}'.format(tloss/len(trainloader)))
-        print('Current LR:' + str(scheduler.get_lr()[0]))
+        print('Current LR:' + str(scheduler.get_last_lr()[0]))
 
         return model
 
 
 def validate(model, valloader, args):
-        vcorrects   = [0 for i in range(args.digits-1, args.digits+2)]
-        vlens       = [0 for i in range(args.digits-1, args.digits+2)]
-        
+        vcorrects   = [0 for i in range(args.digits, args.digits+4)]
+        vlens       = [0 for i in range(args.digits, args.digits+4)]
+        vloss = 0
         model.train(mode=False)
         for i,(x,y) in enumerate(valloader):
             xdata       = x.cuda()
             ydata2      = y.cuda()
-            shard       = (3*i)//len(valloader)
+            shard       = (4*i)//len(valloader)
             output      = model(xdata)
+            loss        = criterion(output, ydata2)
+            vloss       = vloss + loss.item()
             pred2       = output.argmax(axis=1)
             seqcorrect  = (pred2==ydata2).prod(-1)
             vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
             vlens[shard]     = vlens[shard] + seqcorrect.nelement()
-        curshard = args.digits - 1
+        curshard = args.digits
 
         for vc,vl in zip(vcorrects, vlens):
             print("val accuracy at {} digits = {}".format(curshard,vc/vl))
             curshard = curshard + 1
-
+        print('validation loss:\t{}'.format(vloss/len(valloader)))
         return model
 
 
@@ -71,13 +73,13 @@ if __name__ == '__main__':
 
     if args.seq_type == 'fib':
         dataset     = NSPDatasetAE(fib, args.digits, size=args.train_size)
-        valset      = NSPDatasetAE(fib, args.digits+1, args.digits-1, size=args.validation_size)
+        valset      = NSPDatasetAE(fib, args.digits+3, args.digits, size=args.validation_size)
     elif args.seq_type == 'arith':
         dataset     = NSPDatasetAE(arith, args.digits, size=args.train_size)
-        valset      = NSPDatasetAE(arith, args.digits+1, args.digits-1, size=args.validation_size)
+        valset      = NSPDatasetAE(arith, args.digits+3, args.digits, size=args.validation_size)
     elif args.seq_type == 'palin':
         dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
-        valset      = NSPDatasetAE(palindrome, args.digits+1, args.digits-1, numbers=1, size=args.validation_size)
+        valset      = NSPDatasetAE(palindrome, args.digits+3, args.digits, numbers=1, size=args.validation_size)
     elif args.seq_type == 'pbtc':
         dataset     = PBTCDataset('train', minSeq = 16, maxSeq = 64) 
         valset      = PBTCDataset('test', minSeq = 64, maxSeq = 128) 
@@ -101,7 +103,7 @@ if __name__ == '__main__':
         model = Models.XLNetAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
     elif args.net == 'nam':
         print('Executing Autoencoder model with Nam\'s Architecture')
-        model = Nam.GRUTFAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
+        model = Nam.NamAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
     elif args.net == 'gru':
         print('Executing Autoencoder model with GRU w.o. Attention')
         model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()

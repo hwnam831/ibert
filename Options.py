@@ -51,6 +51,11 @@ def get_args():
             default='5',
             help='Max number of digits')
     parser.add_argument(
+            "--num_layers",
+            type=int,
+            default='6',
+            help='Number of layers in the model')
+    parser.add_argument(
             "--seq_type",
             type=str,
             choices= ['fib', 'arith', 'palin', 'pbtc'],
