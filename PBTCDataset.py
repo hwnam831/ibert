@@ -4,7 +4,7 @@ import numpy as np
 from collections import defaultdict
 from torch.utils.data import Dataset, DataLoader
 import torch
-
+import random
 
 """
     PBTCDataset
@@ -156,25 +156,29 @@ class PBTCDataset(Dataset):
         return len(self.textual_ids)
     
     ############################################
-    # Mask Last Word
+    # Mask Random Words
     ############################################
     def splitWithMask(self, idxs):
-        whiteSpaceIdx = None
+        whiteSpaceList = list()
         eosIdx = None
         masked = np.asarray([i for i in idxs])
         
         for i, v in enumerate(idxs):
             if v == self.wordtoix.get('_'):
-                whiteSpaceIdx = i
+                whiteSpaceList.append(i)
             if v == self.wordtoix.get('<eos>'):
                 eosIdx = i       
 
-        # Mask last word
-        if whiteSpaceIdx is not None:
-            masked[whiteSpaceIdx: eosIdx] = self.wordtoix.get('<mask>')
+        # If there are more than two words
+        # ex: [4, 10, 19, 24, 27, eosIdx]
+        if len(whiteSpaceList) > 0:
+            whiteSpaceList.append(eosIdx)
+            startIdx = random.randint(0, len(whiteSpaceList)-2)
+            endIdx = startIdx + 1
+            masked[whiteSpaceList[startIdx]: whiteSpaceList[endIdx]] = self.wordtoix.get('<mask>')
             return masked, idxs
         
-        # If there is one word, return original file. eg) Hello 
+        # If there is one word, return original text. eg) Hello 
         else:
             return idxs, idxs
 
