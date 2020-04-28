@@ -200,14 +200,21 @@ class NamAE(nn.Module):
         self.norm = nn.LayerNorm(model_size)
         self.tfmodel = nn.TransformerEncoder(nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout), \
             num_layers=num_layers, norm=nn.LayerNorm(model_size))
-        self.fc = nn.Linear(model_size, vocab_size)
+        #self.fc = nn.Linear(model_size, vocab_size)
+        self.fc = nn.Sequential(
+            nn.Conv1d(model_size, model_size, 5, 1, 2),
+            nn.BatchNorm1d(model_size),
+            nn.ReLU(),
+            nn.Conv1d(model_size, vocab_size, 1, 1, 0)
+        )
 
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input):
         src = self.embedding(input.permute(1,0,2))[0]
         src = self.norm(src)
         out = self.tfmodel(self.dropout(src))
-        return self.fc(out).permute(1,2,0)
+        #return self.fc(out).permute(1,2,0)
+        return self.fc(out.permute(1,2,0))
 
 # From https://github.com/pytorch/fairseq/blob/master/fairseq/models/lstm.py
 class AttentionLayer(nn.Module):
