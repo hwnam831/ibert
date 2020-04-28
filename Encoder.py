@@ -53,7 +53,7 @@ class CNNEncoder(nn.Module):
         return memory.permute(2,0,1)
 
 class XLNetEncoderLayer(nn.Module):
-    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation="relu", maxlen=128):
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation="relu", maxlen=256):
         super().__init__()
         self.self_attn = XLNet.XLNetRelativeAttention(d_model, nhead, dropout=dropout)
         # Implementation of Feedforward model
