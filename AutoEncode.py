@@ -82,8 +82,8 @@ if __name__ == '__main__':
         dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
         valset      = NSPDatasetAE(palindrome, args.digits+3, args.digits, numbers=1, size=args.validation_size)
     elif args.seq_type == 'pbtc':
-        dataset     = PBTCDataset('train', minSeq = 16, maxSeq = 64) 
-        valset      = PBTCDataset('test', minSeq = 64, maxSeq = 128) 
+        dataset     = PBTCDataset('train', minSeq = 16, maxSeq = 128) 
+        valset      = PBTCDataset('test', minSeq = 128, maxSeq = 192) 
     else :
         print('Sequence type {} not supported yet'.format(args.seq_type))
         exit()
@@ -104,7 +104,7 @@ if __name__ == '__main__':
         model = Models.XLNetAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'nam':
         print('Executing Autoencoder model with Nam\'s Architecture')
-        model = Nam.NamAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
+        model = Nam.GRUTFAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'vikram':
         print('Executing Autoencoder model with Vikram\'s Architecture')
         model = Vikram.VikramAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
