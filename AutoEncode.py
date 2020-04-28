@@ -34,11 +34,16 @@ def train(model, trainloader, criterion, optimizer, scheduler):
             tlen        = tlen + seqcorrect.nelement()
         scheduler.step()
 
+        trainingResult = list()
         print('train seq acc:\t'+str(tcorrect/tlen))
         print('train loss:\t{}'.format(tloss/len(trainloader)))
         print('Current LR:' + str(scheduler.get_last_lr()[0]))
+        trainingResult.append('train seq acc:\t'+str(tcorrect/tlen))
+        trainingResult.append(str('train loss:\t{}'.format(tloss/len(trainloader))))
+        trainingResult.append('Current LR:' + str(scheduler.get_last_lr()[0]))
 
-        return model
+
+        return model, trainingResult
 
 
 def validate(model, valloader, args):
@@ -59,18 +64,27 @@ def validate(model, valloader, args):
             vlens[shard]     = vlens[shard] + seqcorrect.nelement()
         curshard = args.digits
 
+        accuracyResult = list()
         for vc,vl in zip(vcorrects, vlens):
             print("val accuracy at {} digits = {}".format(curshard,vc/vl))
+            accuracyResult.append("val accuracy at {} digits = {}".format(curshard,vc/vl))
             curshard = curshard + 1
         print('validation loss:\t{}'.format(vloss/len(valloader)))
-        return model
+        accuracyResult.append('validation loss:\t{}'.format(vloss/len(valloader)))
+        
+        return model, accuracyResult
 
-
+def logger(args, epoch, contents):
+    with open(str(args.seq_type) + " " + str(args.net) +".log", "a+") as fd:
+        fd.write('\nEpoch #{}:'.format(epoch))
+        fd.write('\n')
+        for sen in contents:
+            fd.write(sen)
+            fd.write('\n')
 
 if __name__ == '__main__':
     
     args = Options.get_args()
-
 
     if args.seq_type == 'fib':
         dataset     = NSPDatasetAE(fib, args.digits, size=args.train_size)
@@ -128,9 +142,13 @@ if __name__ == '__main__':
         print('\nEpoch #{}:'.format(e+1))
         
         #train the model
-        model = train(model, trainloader, criterion, optimizer, scheduler)
+        model, result1 = train(model, trainloader, criterion, optimizer, scheduler)
 
         #validate the model
-        model = validate(model, valloader, args)
+        model, result2 = validate(model, valloader, args)
+        
+        #save into logfile
+        result1.extend(result2)
+        logger(args, e+1, result1)
 
     print('Done')

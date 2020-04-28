@@ -33,7 +33,7 @@ def get_args():
     parser.add_argument(
             "--batch_size",
             type=int,
-            default='128',
+            default='32',
             help='batch size')
     parser.add_argument(
             "--model_size",
