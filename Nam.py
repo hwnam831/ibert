@@ -173,43 +173,40 @@ class GRUTFAE(nn.Module):
         self.embedding = nn.GRU(vocab_size, model_size//2, 1, bidirectional=True)
         self.dropout = nn.Dropout(dropout)
         self.enclayer = nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout)
-        #self.enclayer = NamEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout)
         self.norm = nn.LayerNorm(model_size)
         self.tfmodel = nn.TransformerEncoder(self.enclayer, \
             num_layers=num_layers, norm=self.norm)
         self.fc = nn.Linear(model_size, vocab_size)
+
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input):
         input2 = input.permute(1,0,2)
         src = self.embedding(input2)[0]
+        src = self.norm(src)
         out = self.tfmodel(self.dropout(src))
         return self.fc(out).permute(1,2,0)
 
 class NamAE(nn.Module):
-    def __init__(self, model_size=512, nhead=4, num_layers=12, vocab_size=16, dropout=0.2):
+    def __init__(self, model_size=512, nhead=4, num_layers=12, vocab_size=16, dropout=0.1):
         super().__init__()
         self.model_size=model_size
         self.vocab_size = vocab_size
         assert model_size % 2 == 0
-        self.embedding = nn.GRU(vocab_size, model_size//2, 1, bidirectional=True)
-        self.embedding2 = nn.Linear(vocab_size, model_size)
+        self.embedding = nn.Sequential(
+            nn.Linear(vocab_size, model_size),
+            nn.LSTM(model_size, model_size//2, 1, bidirectional=True)
+        )
         self.dropout = nn.Dropout(dropout)
-        #self.enclayer = TwoStreamEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout)
-        #self.enclayer = nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout)
         self.norm = nn.LayerNorm(model_size)
-        self.encoder = nn.ModuleList([
-            TwoStreamEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout) for _ in range(num_layers)
-        ])
-        self.layers = nn.ModuleList
+        self.tfmodel = nn.TransformerEncoder(nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout), \
+            num_layers=num_layers, norm=nn.LayerNorm(model_size))
         self.fc = nn.Linear(model_size, vocab_size)
+
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input):
-        input2 = input.permute(1,0,2)
-        src = self.embedding(input2)[0]
-        h,g = (self.dropout(self.embedding2(input2)), self.dropout(src))
-        for layer in self.encoder:
-            h,g = layer(h,g)
-        out = self.dropout(g)
+        src = self.embedding(input.permute(1,0,2))[0]
+        src = self.norm(src)
+        out = self.tfmodel(self.dropout(src))
         return self.fc(out).permute(1,2,0)
 
 # From https://github.com/pytorch/fairseq/blob/master/fairseq/models/lstm.py

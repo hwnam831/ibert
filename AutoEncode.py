@@ -104,7 +104,7 @@ if __name__ == '__main__':
         model = Models.XLNetAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'nam':
         print('Executing Autoencoder model with Nam\'s Architecture')
-        model = Nam.GRUTFAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
+        model = Nam.NamAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'vikram':
         print('Executing Autoencoder model with Vikram\'s Architecture')
         model = Vikram.VikramAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
@@ -117,6 +117,7 @@ if __name__ == '__main__':
     else :
         print('Network {} not supported'.format(args.net))
         exit()
+    print(model)
 
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     valloader   = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
