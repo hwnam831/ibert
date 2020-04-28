@@ -110,7 +110,8 @@ class XLNetAE(nn.Module):
         klen = input2.shape[0]
         rpos = torch.arange(self.maxlen-klen, self.maxlen+klen, device=input.device)
         r = self.relembed(rpos[:,None].expand(2*klen,input2.shape[1]))
-        h,g = (self.embedding(input2), self.posembed(ipos))
+        src = self.embedding(input2)
+        h,g = (src, src)
         for layer in self.encoder:
             h,g = layer(h,g,r)
         #out = torch.cat(out,dim=-1)
