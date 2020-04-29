@@ -202,8 +202,6 @@ class NamAE(nn.Module):
             num_layers=num_layers, norm=nn.LayerNorm(model_size))
         #self.fc = nn.Linear(model_size, vocab_size)
         self.fc = nn.Sequential(
-            nn.Conv1d(model_size, model_size, 5, 1, 2),
-            nn.BatchNorm1d(model_size),
             nn.ReLU(),
             nn.Conv1d(model_size, vocab_size, 1, 1, 0)
         )
