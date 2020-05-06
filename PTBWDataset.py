@@ -22,8 +22,8 @@ import random
                 <bos> : Beginning of the sentence
                 <eos> : End of the sentence
                 <unk> : For unknown words 
-                <mask> : Mask
                 <etc> : etc. This is different from unk
+                <mask> : Mask
 """
 class PTBWDataset(Dataset):
 
@@ -31,7 +31,7 @@ class PTBWDataset(Dataset):
         'data/penn/valid.txt',
         'data/penn/test.txt']
 
-    def __init__(self, dataType, ixtoword=None, wordtoix=None, minSeq = 16, maxSeq = 128, THRESHOLD=5):
+    def __init__(self, dataType, ixtoword=None, wordtoix=None, minSeq = 4, maxSeq = 64, THRESHOLD=5):
         self.minSeq = minSeq
         self.maxLen = maxSeq
         self.data = self.loadData(dataType)        
@@ -42,13 +42,14 @@ class PTBWDataset(Dataset):
         self.padded_ids = None
         self.vocab_size = len(self.wordtoix)
 
+        
         print("Sample Data Loaded")
         print(self.data[124])
 
-        print("Coverted into textual_ids")
-        print("0: <pad>, 1: <bos>, 2: <eos>, 3: <unk>, 4: _, 5: <mask>")
-        print(self.textual_ids[124])
-
+        # print("Coverted into textual_ids")
+        print("0: <pad>, 1: <bos>, 2: <eos>, 3: <unk>, 4: <etc> 5: <mask>")
+        # print(self.textual_ids[124])
+        
         print("Start Padding to make every data have same length")
         self.padded_ids = [self.pad_sequences(x, self.maxLen) for x in self.textual_ids]   
         print(self.padded_ids[124])
@@ -151,18 +152,14 @@ class PTBWDataset(Dataset):
         masked = np.asarray([i for i in idxs])
         
         for i, v in enumerate(idxs):
-            if v == self.wordtoix.get('_'):
-                whiteSpaceList.append(i)
             if v == self.wordtoix.get('<eos>'):
                 eosIdx = i       
 
         # If there are more than two words
         # ex: [4, 10, 19, 24, 27, eosIdx]
-        if len(whiteSpaceList) > 0:
-            whiteSpaceList.append(eosIdx)
-            startIdx = random.randint(0, len(whiteSpaceList)-2)
-            endIdx = startIdx + 1
-            masked[whiteSpaceList[startIdx]: whiteSpaceList[endIdx]] = self.wordtoix.get('<mask>')
+        if eosIdx > 2:
+            randomIdx = random.randint(1, eosIdx-1)
+            masked[randomIdx] = self.wordtoix.get('<mask>')
             return masked, idxs
         
         # If there is one word, return original text. eg) Hello 
@@ -171,6 +168,5 @@ class PTBWDataset(Dataset):
 
 if __name__ == '__main__':
     dataset = PTBWDataset('train') # Use among 'train', 'valid', 'test'
-    dataset.__getitem__(124)
+    dataset.__getitem__(124) 
     loader = DataLoader(dataset, batch_size=4)
-    # print(dataset.wordtoix)

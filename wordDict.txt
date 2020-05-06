@@ -2,8 +2,8 @@
 <bos>
 <eos>
 <unk>
-<mask>
 <etc>
+<mask>
 the
 N
 of
