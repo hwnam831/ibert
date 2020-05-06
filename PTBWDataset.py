@@ -18,11 +18,12 @@ import random
         
         Description: 
             This dataset uses following preprocessing strategy
-                <pad> : To make all tensors have equal size (Not used but just in case. April 8, 2020)
+                <pad> : To make all tensors have equal size 
                 <bos> : Beginning of the sentence
                 <eos> : End of the sentence
-                <unk> : For unknown characters 
-                _     : Whitespace
+                <unk> : For unknown words 
+                <mask> : Mask
+                <etc> : etc. This is different from unk
 """
 class PTBWDataset(Dataset):
 
@@ -119,7 +120,7 @@ class PTBWDataset(Dataset):
         with io.open(f, encoding='UTF-8') as f:
             for line in f:    
                 if len(line) > self.minSeq and len(line) < self.maxLen:
-                    corpus.append(line.rstrip().split(' '))
+                    corpus.append(line.lstrip(" ").rstrip().split(' '))
         return corpus    
   
     def onehot_encoder(self, idxs):
@@ -130,14 +131,11 @@ class PTBWDataset(Dataset):
 
     def __getitem__(self, index):
         x = self.padded_ids[index]
-        # x = np.asarray(x, dtype=np.float32)
-
 
         masked, target = self.splitWithMask(x)
         target = self.pad_sequences(target, masked.shape[0])
 
         masked = self.onehot_encoder(masked)
-        # target = self.onehot_encoder(target)
 
         return masked, target
 
@@ -175,4 +173,4 @@ if __name__ == '__main__':
     dataset = PTBWDataset('train') # Use among 'train', 'valid', 'test'
     dataset.__getitem__(124)
     loader = DataLoader(dataset, batch_size=4)
-    print(dataset.wordtoix)
+    # print(dataset.wordtoix)
