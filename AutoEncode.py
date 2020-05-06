@@ -73,6 +73,7 @@ def validate(model, valloader, args):
         print('validation loss:\t{}'.format(vloss/len(valloader)))
         accuracyResult.append('validation loss:\t{}'.format(vloss/len(valloader)))
         
+
         return model, accuracyResult
 
 def logger(args, epoch, contents):
@@ -82,6 +83,7 @@ def logger(args, epoch, contents):
         for sen in contents:
             fd.write(sen)
             fd.write('\n')
+
 
 if __name__ == '__main__':
     

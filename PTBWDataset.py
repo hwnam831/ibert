@@ -4,6 +4,8 @@ from collections import defaultdict
 from torch.utils.data import Dataset, DataLoader
 import torch
 import random
+from buildDictTxt import BuildWordDict
+import copy
 
 """
     PennTreeBankWord Dataset
@@ -41,7 +43,7 @@ class PTBWDataset(Dataset):
         self.textual_ids = self.build_dictionary()
         self.padded_ids = None
         self.vocab_size = len(self.wordtoix)
-
+        self.vocabDict = None
         
         print("Sample Data Loaded")
         print(self.data[124])
@@ -71,6 +73,8 @@ class PTBWDataset(Dataset):
         freqDict = defaultdict(int)
         wordDict = defaultdict(str)
         ixtoword = defaultdict(int)
+        temp = BuildWordDict("./data/penn/train.txt", "penn", 5, False)
+        # self.vocabDict = copy.copy(trainDict.finalDict)
 
         with io.open('wordDict.txt', encoding='UTF-8') as f:
             for i, line in enumerate(f):    
@@ -165,8 +169,10 @@ class PTBWDataset(Dataset):
         # If there is one word, return original text. eg) Hello 
         else:
             return idxs, idxs
+    
 
 if __name__ == '__main__':
     dataset = PTBWDataset('train') # Use among 'train', 'valid', 'test'
     dataset.__getitem__(124) 
+    print(dataset.vocabDict)
     loader = DataLoader(dataset, batch_size=4)
