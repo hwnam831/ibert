@@ -7,7 +7,8 @@ import Models
 import Nam
 import Vikram
 from NSPDataset import NSPDatasetAE, Token, fib, arith, palindrome
-from PBTCDataset import PBTCDataset
+from PTBCDataset import PTBCDataset
+from PTBWDataset import PTBWDataset
 from torch.utils.data import Dataset, DataLoader
 
 def train(model, trainloader, criterion, optimizer, scheduler):
@@ -95,14 +96,19 @@ if __name__ == '__main__':
     elif args.seq_type == 'palin':
         dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
         valset      = NSPDatasetAE(palindrome, args.digits+3, args.digits, numbers=1, size=args.validation_size)
-    elif args.seq_type == 'pbtc':
-        dataset     = PBTCDataset('train', minSeq = 16, maxSeq = 128) 
-        valset      = PBTCDataset('test', minSeq = 128, maxSeq = 192) 
+    elif args.seq_type == 'ptbc':
+        dataset     = PTBCDataset('train', minSeq = 16, maxSeq = 128) 
+        valset      = PTBCDataset('test', minSeq = 128, maxSeq = 192) 
+    elif args.seq_type == 'ptbw':
+        dataset     = PTBWDataset('train', minSeq = 8, maxSeq = 32) 
+        valset      = PTBWDataset('test', minSeq = 32, maxSeq = 64) 
     else :
         print('Sequence type {} not supported yet'.format(args.seq_type))
         exit()
 
-    if args.seq_type == 'pbtc': 
+    if args.seq_type == 'ptbc': 
+        vocab_size = dataset.vocab_size
+    elif args.seq_type == 'ptbw': 
         vocab_size = dataset.vocab_size
     else:
         vocab_size = 16

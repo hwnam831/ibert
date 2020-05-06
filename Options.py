@@ -58,9 +58,9 @@ def get_args():
     parser.add_argument(
             "--seq_type",
             type=str,
-            choices= ['fib', 'arith', 'palin', 'pbtc'],
+            choices= ['fib', 'arith', 'palin', 'ptbc', 'ptbw'],
             default='fib',
-            help='fib: fibonacci / arith: arithmetic / palin: palindrome / pbtc: PennTreeBank Character')
+            help='fib: fibonacci / arith: arithmetic / palin: palindrome / ptbc: ptb char / ptbw: ptb word')
     parser.add_argument(
             "--lr",
             type=float,
