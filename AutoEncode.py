@@ -107,7 +107,7 @@ if __name__ == '__main__':
         model = Nam.NamAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'vikram':
         print('Executing Autoencoder model with Vikram\'s Architecture')
-        model = Vikram.VikramAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
+        model = Vikram.VikramAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads, num_layers=args.num_layers).cuda()
     elif args.net == 'gru':
         print('Executing Autoencoder model with GRU w.o. Attention')
         model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()
