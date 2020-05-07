@@ -6,7 +6,7 @@ from Decoder import TFDecoder
 
 
 class TfS2S(nn.Module):
-    def __init__(self, model_size=512, maxlen=128):
+    def __init__(self, model_size=512, maxlen=256):
         super().__init__()
         self.model_size=model_size
         self.maxlen=maxlen
@@ -27,7 +27,7 @@ class TfS2S(nn.Module):
         return self.decoder(tgt, memory).permute(1,2,0)
 
 class TfAE(nn.Module):
-    def __init__(self, model_size=512, nhead=4, maxlen=128, vocab_size=16):
+    def __init__(self, model_size=512, nhead=4, num_layers=6, maxlen=256, vocab_size=16):
         super().__init__()
         self.model_size=model_size
         self.maxlen=maxlen
@@ -36,7 +36,7 @@ class TfAE(nn.Module):
         self.posembed = nn.Embedding(maxlen, model_size)
         self.enclayer = nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead)
         self.norm = nn.LayerNorm(model_size)
-        self.tfmodel = nn.TransformerEncoder(self.enclayer, num_layers=6, norm=self.norm)
+        self.tfmodel = nn.TransformerEncoder(self.enclayer, num_layers=num_layers, norm=self.norm)
         self.fc = nn.Linear(model_size, vocab_size)
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input): 
@@ -63,7 +63,7 @@ class CNNAE(nn.Module):
         return self.fc(out).permute(1,2,0)
 
 class XLNetAE(nn.Module):
-    def __init__(self, d_model=512, nhead=4, maxlen=128, num_layers=6, vocab_size=16):
+    def __init__(self, d_model=512, nhead=4, maxlen=256, num_layers=6, vocab_size=16):
         super().__init__()
         self.d_model=d_model
         self.maxlen=maxlen
@@ -110,14 +110,15 @@ class XLNetAE(nn.Module):
         klen = input2.shape[0]
         rpos = torch.arange(self.maxlen-klen, self.maxlen+klen, device=input.device)
         r = self.relembed(rpos[:,None].expand(2*klen,input2.shape[1]))
-        h,g = (self.embedding(input2), self.posembed(ipos))
+        src = self.embedding(input2)
+        h,g = (src, src)
         for layer in self.encoder:
             h,g = layer(h,g,r)
         #out = torch.cat(out,dim=-1)
-        return self.fc(h).permute(1,2,0)
+        return self.fc(g).permute(1,2,0)
 
 class GRUAE(nn.Module):
-    def __init__(self, model_size=512, nhead=4, maxlen=128, vocab_size=16):
+    def __init__(self, model_size=512, nhead=4, maxlen=256, vocab_size=16):
         super().__init__()
         self.model_size=model_size
         self.vocab_size = vocab_size
