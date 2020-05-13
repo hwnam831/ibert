@@ -106,10 +106,10 @@ class XLNetAE(nn.Module):
     def forward(self, input):
         input2 = input.permute(1,0,2)
         ipos = torch.arange(input2.size(0), device=input.device)[:,None].expand(input2.shape[:2])
-        #pos_emb = self.relative_positional_encoding(input2.size(0),input2.size(0),input.size(0))
+        r = pos_emb = self.relative_positional_encoding(input2.size(0),input2.size(0),input.size(0))
         klen = input2.shape[0]
         rpos = torch.arange(self.maxlen-klen, self.maxlen+klen, device=input.device)
-        r = self.relembed(rpos[:,None].expand(2*klen,input2.shape[1]))
+        # r = self.relembed(rpos[:,None].expand(2*klen,input2.shape[1]))
         h,g = (self.embedding(input2), self.posembed(ipos))
         for layer in self.encoder:
             h,g = layer(h,g,r)
