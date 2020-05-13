@@ -174,7 +174,7 @@ class VikEncoderLayer(nn.Module):
 
 
 class VikramAE(nn.Module):
-    def __init__(self, model_size=512, nhead=8, maxlen=128, vocab_size=16):
+    def __init__(self, model_size=512, num_layers=6, nhead=8, maxlen=128, vocab_size=16):
         super().__init__()
         self.model_size=model_size
         self.maxlen=maxlen
@@ -185,7 +185,7 @@ class VikramAE(nn.Module):
         self.enclayer = VikEncoderLayer(d_model=model_size, nhead=nhead)
         self.norm = nn.LayerNorm(model_size)
         self.tfmodel = nn.TransformerEncoder(self.enclayer, \
-            num_layers=8, norm=self.norm)
+            num_layers=num_layers, norm=self.norm)
         self.fc = nn.Linear(model_size, vocab_size)
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input):

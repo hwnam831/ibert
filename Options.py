@@ -12,7 +12,7 @@ def get_args():
     parser.add_argument(
             "--net",
             type=str,
-            choices=['tf', 'cnn', 'gru', 'xlnet', 'nam', 'nampos', 'noor', 'lan', 'vikram', 'bruno'],
+            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'nam', 'nampos', 'noor', 'lan', 'vikram', 'bruno'],
             default='tf',
             help='network choices')
     parser.add_argument(
@@ -48,7 +48,7 @@ def get_args():
     parser.add_argument(
             "--digits",
             type=int,
-            default='5',
+            default='8',
             help='Max number of digits')
     parser.add_argument(
             "--num_layers",
@@ -64,7 +64,7 @@ def get_args():
     parser.add_argument(
             "--lr",
             type=float,
-            default=1e-4,
+            default=3e-5,
             help='Default learning rate')
 
     return parser.parse_args()
