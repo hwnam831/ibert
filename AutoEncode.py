@@ -117,11 +117,6 @@ if __name__ == '__main__':
         exit()
 
     if args.seq_type == 'ptbc': 
-<<<<<<< HEAD
-=======
-        vocab_size = dataset.vocab_size
-    elif args.seq_type == 'ptbw': 
->>>>>>> origin/sbseo2
         vocab_size = dataset.vocab_size
         dictionary = dataset.wordtoix
     elif args.seq_type == 'ptbw': 
@@ -169,14 +164,14 @@ if __name__ == '__main__':
         print('\nEpoch #{}:'.format(e+1))
         
         #train the model
-        model, result1 = train(model, trainloader, criterion, optimizer, scheduler)
+        model, trainResult = train(model, trainloader, criterion, optimizer, scheduler)
 
         #validate the model
-        model, result2 = validate(model, valloader, args)
+        model, valResult = validate(model, valloader, args)
         
         if args.log == 'true':
             #save into logfile
-            result1.extend(result2)
-            logger(args, ts, e+1, result1)
+            trainResult.extend(valResult)
+            logger(args, ts, e+1, trainResult)
 
     print('Done')
