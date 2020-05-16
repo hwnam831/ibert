@@ -117,6 +117,11 @@ if __name__ == '__main__':
         exit()
 
     if args.seq_type == 'ptbc': 
+<<<<<<< HEAD
+=======
+        vocab_size = dataset.vocab_size
+    elif args.seq_type == 'ptbw': 
+>>>>>>> origin/sbseo2
         vocab_size = dataset.vocab_size
         dictionary = dataset.wordtoix
     elif args.seq_type == 'ptbw': 
