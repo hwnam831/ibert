@@ -76,10 +76,14 @@ def validate(model, valloader, args):
             print("val accuracy at {} digits = {}".format(curshard,vc/vl))
             accuracyResult.append("val accuracy at {} digits = {}".format(curshard,vc/vl))
             curshard = curshard + 1
+        
+        #Sequence accuracy
         print('validation loss:\t{}'.format(vloss/len(valloader)))
-        print('perplexity :\t{}'.format(math.exp((vloss/len(valloader)) * math.log(2))))
         accuracyResult.append('validation loss:\t{}'.format(vloss/len(valloader)))
-        accuracyResult.append('perplexity :\t{}'.format(math.exp((vloss/len(valloader)) * math.log(2))))
+        
+        #Bit per token Under Construction
+        print('bit per token :\t{}'.format(math.exp((vloss/len(valloader)) * math.log(2)))) 
+        accuracyResult.append('bit per token :\t{}'.format(math.exp((vloss/len(valloader)) * math.log(2))))
 
         return model, accuracyResult
 
