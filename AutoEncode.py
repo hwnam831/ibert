@@ -54,28 +54,32 @@ def validate(model, valloader, args):
         vlens       = [0 for i in range(args.digits, args.digits+4)]
         vloss = 0
         model.train(mode=False)
-        for i,(x,y) in enumerate(valloader):
-            xdata       = x.cuda()
-            ydata2      = y.cuda()
-            shard       = (4*i)//len(valloader)
-            output      = model(xdata)
-            loss        = criterion(output, ydata2)
-            vloss       = vloss + loss.item()
-            pred2       = output.argmax(axis=1)
-            seqcorrect  = (pred2==ydata2).prod(-1)
-            vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
-            vlens[shard]     = vlens[shard] + seqcorrect.nelement()
-        curshard = args.digits
         
+        with torch.no_grad():
+            for i,(x,y) in enumerate(valloader):
+                xdata       = x.cuda()
+                ydata2      = y.cuda()
+                shard       = (4*i)//len(valloader)
+                output      = model(xdata)
+                # xdata <- masked index
+                # ydata2 <- answer 
+                loss        = criterion(output, ydata2)
+                vloss       = vloss + loss.item()
+                pred2       = output.argmax(axis=1)
+                seqcorrect  = (pred2==ydata2).prod(-1)
+                vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
+                vlens[shard]     = vlens[shard] + seqcorrect.nelement()
+        curshard = args.digits
+            
         accuracyResult = list()
         for vc,vl in zip(vcorrects, vlens):
             print("val accuracy at {} digits = {}".format(curshard,vc/vl))
             accuracyResult.append("val accuracy at {} digits = {}".format(curshard,vc/vl))
             curshard = curshard + 1
         print('validation loss:\t{}'.format(vloss/len(valloader)))
-        print('perplexity :\t{}'.format(math.exp(vloss)))
+        print('perplexity :\t{}'.format(math.exp((vloss/len(valloader)) * math.log(2))))
         accuracyResult.append('validation loss:\t{}'.format(vloss/len(valloader)))
-        accuracyResult.append('perplexity :\t{}'.format(math.exp(vloss)))
+        accuracyResult.append('perplexity :\t{}'.format(math.exp((vloss/len(valloader)) * math.log(2))))
 
         return model, accuracyResult
 
@@ -107,11 +111,11 @@ if __name__ == '__main__':
         dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
         valset      = NSPDatasetAE(palindrome, args.digits+3, args.digits, numbers=1, size=args.validation_size)
     elif args.seq_type == 'ptbc':
-        dataset     = PTBCDataset('train', minSeq = 16, maxSeq = 128) 
-        valset      = PTBCDataset('test', minSeq = 128, maxSeq = 192) 
+        dataset     = PTBCDataset('train', minSeq = 16, maxSeq = 192) 
+        valset      = PTBCDataset('train', minSeq = 192, maxSeq = 224) 
     elif args.seq_type == 'ptbw':
-        dataset     = PTBWDataset('train', minSeq = 8, maxSeq = 32) 
-        valset      = PTBWDataset('test', minSeq = 32, maxSeq = 64) 
+        dataset     = PTBWDataset('train', minSeq = 2, maxSeq = 32) 
+        valset      = PTBWDataset('train', minSeq = 32, maxSeq = 64) 
     else :
         print('Sequence type {} not supported yet'.format(args.seq_type))
         exit()

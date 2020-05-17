@@ -122,7 +122,8 @@ class PTBWDataset(Dataset):
         corpus = list()
         with io.open(f, encoding='UTF-8') as f:
             for line in f:    
-                if len(line) > self.minSeq and len(line) < self.maxLen:
+                words = line.split(" ")
+                if len(words) > self.minSeq and len(words) < self.maxLen:
                     corpus.append(line.lstrip(" ").rstrip().split(' '))
         return corpus    
   
