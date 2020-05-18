@@ -29,7 +29,11 @@ def train(model, trainloader, criterion, optimizer, scheduler):
             optimizer.step()
             
             pred        = output.argmax(axis=1)
-            seqcorrect  = (pred==ydata).prod(-1)
+
+            truth = xdata.argmax(axis=2)
+            maskpos = (torch.flatten(truth)!=torch.flatten(ydata))
+            seqcorrect = (torch.flatten(pred)==torch.flatten(ydata))
+
             tcorrect    = tcorrect + seqcorrect.sum().item()
             tlen        = tlen + seqcorrect.nelement()
         scheduler.step()
@@ -42,8 +46,8 @@ def train(model, trainloader, criterion, optimizer, scheduler):
 
 
 def validate(model, valloader, args):
-        vcorrects   = [0 for i in range(args.digits, args.digits+4)]
-        vlens       = [0 for i in range(args.digits, args.digits+4)]
+        vcorrects   = 0
+        vlens       = 0
         vloss = 0
         model.train(mode=False)
         for i,(x,y) in enumerate(valloader):
@@ -54,14 +58,25 @@ def validate(model, valloader, args):
             loss        = criterion(output, ydata2)
             vloss       = vloss + loss.item()
             pred2       = output.argmax(axis=1)
-            seqcorrect  = (pred2==ydata2).prod(-1)
-            vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
-            vlens[shard]     = vlens[shard] + seqcorrect.nelement()
+
+            truth = xdata.argmax(axis=2)
+            maskpos = (torch.flatten(truth)!=torch.flatten(ydata2))
+            seqcorrect = (torch.flatten(pred2)==torch.flatten(ydata2))
+
+            """
+            print('pred2')
+            print([[valset.ixtoword[c.item()] for c in s]
+                for s in pred2[0:2].data.cpu()])
+            print('ydata2')
+            print([[dataset.ixtoword[c.item()] for c in s]
+                for s in ydata2[0:2].data.cpu()])
+            """
+
+            vcorrects += seqcorrect[maskpos].sum().item()
+            vlens += seqcorrect[maskpos].nelement()
         curshard = args.digits
 
-        for vc,vl in zip(vcorrects, vlens):
-            print("val accuracy at {} digits = {}".format(curshard,vc/vl))
-            curshard = curshard + 1
+        print("val accuracy:\t{}".format(vcorrects/vlens))
         print('validation loss:\t{}'.format(vloss/len(valloader)))
         return model
 
@@ -82,8 +97,8 @@ if __name__ == '__main__':
         dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
         valset      = NSPDatasetAE(palindrome, args.digits+3, args.digits, numbers=1, size=args.validation_size)
     elif args.seq_type == 'pbtc':
-        dataset     = PBTCDataset('train', minSeq = 16, maxSeq = 128) 
-        valset      = PBTCDataset('test', minSeq = 128, maxSeq = 192) 
+        dataset     = PBTCDataset('train', minSeq = 16, maxSeq = 64) 
+        valset      = PBTCDataset('test', minSeq = 64, maxSeq = 128) 
     else :
         print('Sequence type {} not supported yet'.format(args.seq_type))
         exit()
@@ -110,17 +125,13 @@ if __name__ == '__main__':
         model = Nam.NamPosAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'vikram':
         print('Executing Autoencoder model with Vikram\'s Architecture')
-        model = Vikram.VikramAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads, num_layers=args.num_layers).cuda()
+        model = Vikram.VikramAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads).cuda()
     elif args.net == 'gru':
         print('Executing Autoencoder model with GRU w.o. Attention')
         model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()
-    elif args.net == 'lstm':
-        print('Executing Autoencoder model with LSTM including Attention')
-        model = Nam.LSTMAE(args.model_size, vocab_size = vocab_size).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()
-    print(model)
 
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     valloader   = DataLoader(valset, batch_size=args.batch_size, num_workers=2)

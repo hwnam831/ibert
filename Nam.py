@@ -211,7 +211,37 @@ class NamAE(nn.Module):
         src = self.embedding(input.permute(1,0,2))[0]
         src = self.norm(src)
         out = self.tfmodel(self.dropout(src))
-        #return self.fc(out).permute(1,2,0)
+        return self.fc(out.permute(1,2,0))
+
+class NamPosAE(nn.Module):
+    def __init__(self, model_size=512, nhead=4, num_layers=12, vocab_size=16, dropout=0.1, maxlen=128):
+        super().__init__()
+        self.model_size=model_size
+        self.vocab_size = vocab_size
+        self.maxlen=maxlen
+        self.posembed = nn.Embedding(maxlen, model_size)
+        assert model_size % 2 == 0
+        self.embedding = nn.Sequential(
+            nn.Linear(vocab_size, model_size),
+            nn.LSTM(model_size, model_size//2, 1, bidirectional=True)
+        )
+        self.dropout = nn.Dropout(dropout)
+        self.norm = nn.LayerNorm(model_size)
+        self.tfmodel = nn.TransformerEncoder(nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout), \
+            num_layers=num_layers, norm=nn.LayerNorm(model_size))
+        #self.fc = nn.Linear(model_size, vocab_size)
+        self.fc = nn.Sequential(
+            nn.ReLU(),
+            nn.Conv1d(model_size, vocab_size, 1, 1, 0)
+        )
+
+    #Batch-first in (N,S,C), batch-first out (N,C,S)
+    def forward(self, input):
+        input = input.permute(1,0,2)
+        ipos = torch.arange(input.size(0), device=input.device)[:,None].expand(input.shape[:2])
+        src = self.embedding(input)[0] + self.posembed(ipos)
+        src = self.norm(src)
+        out = self.tfmodel(self.dropout(src))
         return self.fc(out.permute(1,2,0))
 
 # From https://github.com/pytorch/fairseq/blob/master/fairseq/models/lstm.py
@@ -260,4 +290,3 @@ class LSTMAE(nn.Module):
         outputs, _ = self.attn(outputs, outputs)
         outputs, state = self.decoder(self.dropout(outputs))
         return self.fc(self.dropout(outputs)).permute(1,2,0)
-
