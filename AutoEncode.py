@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 import argparse
 import Options
 import Models
 import Nam
 import Vikram
-from NSPDataset import NSPDatasetAE, Token, fib, arith, palindrome
+from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome
 from PTBCDataset import PTBCDataset
 from PTBWDataset import PTBWDataset
 from torch.utils.data import Dataset, DataLoader
@@ -50,11 +51,12 @@ def train(model, trainloader, criterion, optimizer, scheduler):
 
 
 def validate(model, valloader, args):
-        vcorrects   = [0 for i in range(args.digits, args.digits+4)]
-        vlens       = [0 for i in range(args.digits, args.digits+4)]
+        vcorrects   = [0 for i in range(args.digits+1, args.digits+5)]
+        vlens       = [0 for i in range(args.digits+1, args.digits+5)]
         vloss = 0
         model.train(mode=False)
-        
+        bits = 0.0
+        maskcount = 0
         with torch.no_grad():
             for i,(x,y) in enumerate(valloader):
                 xdata       = x.cuda()
@@ -63,13 +65,17 @@ def validate(model, valloader, args):
                 output      = model(xdata)
                 # xdata <- masked index
                 # ydata2 <- answer 
-                loss        = criterion(output, ydata2)
-                vloss       = vloss + loss.item()
+                ismask = xdata == Token.mask if args.seq_type in ['fib', 'arith', 'palin'] else xdata == valset.wordtoix.get('<mask>')
+                mcnt = ismask.sum().item()
+                loss        = F.cross_entropy(output, ydata2, reduction='none')
+                vloss       = vloss + loss.mean().item()
+                bits += (loss*ismask).sum().item()
+                maskcount += mcnt
                 pred2       = output.argmax(axis=1)
                 seqcorrect  = (pred2==ydata2).prod(-1)
                 vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
                 vlens[shard]     = vlens[shard] + seqcorrect.nelement()
-        curshard = args.digits
+        curshard = args.digits+1
             
         accuracyResult = list()
         for vc,vl in zip(vcorrects, vlens):
@@ -82,8 +88,8 @@ def validate(model, valloader, args):
         accuracyResult.append('validation loss:\t{}'.format(vloss/len(valloader)))
         
         #Bit per token Under Construction
-        print('bit per token :\t{}'.format(math.exp((vloss/len(valloader)) * math.log(2)))) 
-        accuracyResult.append('bit per token :\t{}'.format(math.exp((vloss/len(valloader)) * math.log(2))))
+        print('Perplexity :\t{}'.format(math.exp((bits/maskcount) * math.log(2)))) 
+        accuracyResult.append('Perplexity :\t{}'.format(math.exp((bits/maskcount) * math.log(2))))
 
         return model, accuracyResult
 
@@ -106,14 +112,14 @@ if __name__ == '__main__':
     args = Options.get_args()
 
     if args.seq_type == 'fib':
-        dataset     = NSPDatasetAE(fib, args.digits, size=args.train_size)
-        valset      = NSPDatasetAE(fib, args.digits+3, args.digits, size=args.validation_size)
+        dataset     = NSPDatasetAE2(fib, args.digits, size=args.train_size)
+        valset      = NSPDatasetAE2(fib, args.digits+4, args.digits+1, size=args.validation_size)
     elif args.seq_type == 'arith':
-        dataset     = NSPDatasetAE(arith, args.digits, size=args.train_size)
-        valset      = NSPDatasetAE(arith, args.digits+3, args.digits, size=args.validation_size)
+        dataset     = NSPDatasetAE2(arith, args.digits, size=args.train_size)
+        valset      = NSPDatasetAE2(arith, args.digits+4, args.digits+1, size=args.validation_size)
     elif args.seq_type == 'palin':
-        dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
-        valset      = NSPDatasetAE(palindrome, args.digits+3, args.digits, numbers=1, size=args.validation_size)
+        dataset     = NSPDatasetAE2(palindrome, args.digits, numbers=1, size=args.train_size)
+        valset      = NSPDatasetAE2(palindrome, args.digits+4, args.digits+1, numbers=1, size=args.validation_size)
     elif args.seq_type == 'ptbc':
         dataset     = PTBCDataset('train', minSeq = 16, maxSeq = 192) 
         valset      = PTBCDataset('train', minSeq = 192, maxSeq = 224) 

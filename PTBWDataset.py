@@ -137,9 +137,9 @@ class PTBWDataset(Dataset):
         x = self.padded_ids[index]
 
         masked, target = self.splitWithMask(x)
-        target = self.pad_sequences(target, masked.shape[0])
+        #target = self.pad_sequences(target, masked.shape[0])
 
-        masked = self.onehot_encoder(masked)
+        #masked = self.onehot_encoder(masked)
 
         return masked, target
 
