@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 import argparse
 import Options
@@ -54,7 +55,8 @@ def validate(model, valloader, args):
         vlens       = [0 for i in range(args.digits+1, args.digits+5)]
         vloss = 0
         model.train(mode=False)
-        
+        bits = 0.0
+        maskcount = 0
         with torch.no_grad():
             for i,(x,y) in enumerate(valloader):
                 xdata       = x.cuda()
@@ -63,8 +65,12 @@ def validate(model, valloader, args):
                 output      = model(xdata)
                 # xdata <- masked index
                 # ydata2 <- answer 
-                loss        = criterion(output, ydata2)
-                vloss       = vloss + loss.item()
+                ismask = x == Token.mask
+                mcnt = ismask.sum().item()
+                loss        = F.cross_entropy(output, ydata2, reduction='none')
+                vloss       = vloss + loss.mean().item()
+                bits += (loss*ismask).sum().item()
+                maskcount += mcnt
                 pred2       = output.argmax(axis=1)
                 seqcorrect  = (pred2==ydata2).prod(-1)
                 vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
@@ -82,8 +88,8 @@ def validate(model, valloader, args):
         accuracyResult.append('validation loss:\t{}'.format(vloss/len(valloader)))
         
         #Bit per token Under Construction
-        print('bit per token :\t{}'.format(math.exp((vloss/len(valloader)) * math.log(2)))) 
-        accuracyResult.append('bit per token :\t{}'.format(math.exp((vloss/len(valloader)) * math.log(2))))
+        print('Perplexity :\t{}'.format(math.exp((bits/maskcount) * math.log(2)))) 
+        accuracyResult.append('Perplexity :\t{}'.format(math.exp((bits/maskcount) * math.log(2))))
 
         return model, accuracyResult
 

@@ -146,9 +146,9 @@ class PTBCDataset(Dataset):
 
 
         masked, target = self.splitWithMask(x)
-        target = self.pad_sequences(target, masked.shape[0])
+        #target = self.pad_sequences(target, masked.shape[0])
 
-        masked = self.onehot_encoder(masked)
+        #masked = self.onehot_encoder(masked)
         # target = self.onehot_encoder(target)
 
         return masked, target
@@ -176,7 +176,7 @@ class PTBCDataset(Dataset):
             whiteSpaceList.append(eosIdx)
             startIdx = random.randint(0, len(whiteSpaceList)-2)
             endIdx = startIdx + 1
-            masked[whiteSpaceList[startIdx]: whiteSpaceList[endIdx]] = self.wordtoix.get('<mask>')
+            masked[whiteSpaceList[startIdx]+1: whiteSpaceList[endIdx]] = self.wordtoix.get('<mask>')
             return masked, idxs
         
         # If there is one word, return original text. eg) Hello 
