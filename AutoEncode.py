@@ -6,7 +6,7 @@ import Options
 import Models
 import Nam
 import Vikram
-from NSPDataset import NSPDatasetAE, Token, fib, arith, palindrome
+from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome
 from PTBCDataset import PTBCDataset
 from PTBWDataset import PTBWDataset
 from torch.utils.data import Dataset, DataLoader
@@ -50,8 +50,8 @@ def train(model, trainloader, criterion, optimizer, scheduler):
 
 
 def validate(model, valloader, args):
-        vcorrects   = [0 for i in range(args.digits, args.digits+4)]
-        vlens       = [0 for i in range(args.digits, args.digits+4)]
+        vcorrects   = [0 for i in range(args.digits+1, args.digits+5)]
+        vlens       = [0 for i in range(args.digits+1, args.digits+5)]
         vloss = 0
         model.train(mode=False)
         
@@ -69,7 +69,7 @@ def validate(model, valloader, args):
                 seqcorrect  = (pred2==ydata2).prod(-1)
                 vcorrects[shard] = vcorrects[shard] + seqcorrect.sum().item()
                 vlens[shard]     = vlens[shard] + seqcorrect.nelement()
-        curshard = args.digits
+        curshard = args.digits+1
             
         accuracyResult = list()
         for vc,vl in zip(vcorrects, vlens):
@@ -106,14 +106,14 @@ if __name__ == '__main__':
     args = Options.get_args()
 
     if args.seq_type == 'fib':
-        dataset     = NSPDatasetAE(fib, args.digits, size=args.train_size)
-        valset      = NSPDatasetAE(fib, args.digits+3, args.digits, size=args.validation_size)
+        dataset     = NSPDatasetAE2(fib, args.digits, size=args.train_size)
+        valset      = NSPDatasetAE2(fib, args.digits+4, args.digits+1, size=args.validation_size)
     elif args.seq_type == 'arith':
-        dataset     = NSPDatasetAE(arith, args.digits, size=args.train_size)
-        valset      = NSPDatasetAE(arith, args.digits+3, args.digits, size=args.validation_size)
+        dataset     = NSPDatasetAE2(arith, args.digits, size=args.train_size)
+        valset      = NSPDatasetAE2(arith, args.digits+4, args.digits+1, size=args.validation_size)
     elif args.seq_type == 'palin':
-        dataset     = NSPDatasetAE(palindrome, args.digits, numbers=1, size=args.train_size)
-        valset      = NSPDatasetAE(palindrome, args.digits+3, args.digits, numbers=1, size=args.validation_size)
+        dataset     = NSPDatasetAE2(palindrome, args.digits, numbers=1, size=args.train_size)
+        valset      = NSPDatasetAE2(palindrome, args.digits+4, args.digits+1, numbers=1, size=args.validation_size)
     elif args.seq_type == 'ptbc':
         dataset     = PTBCDataset('train', minSeq = 16, maxSeq = 192) 
         valset      = PTBCDataset('train', minSeq = 192, maxSeq = 224) 

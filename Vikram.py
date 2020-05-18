@@ -180,7 +180,10 @@ class VikramAE(nn.Module):
         self.maxlen=maxlen
         self.vocab_size = vocab_size
         assert model_size % 2 == 0
-        self.embedding = nn.LSTM(vocab_size, model_size//2, 1, bidirectional=True)
+        self.embedding = nn.Sequential(
+            nn.Embedding(vocab_size, model_size),
+            nn.LSTM(model_size, model_size//2, 1, bidirectional=True)
+        )
         self.posembed = nn.Embedding(maxlen, model_size)
         self.enclayer = VikEncoderLayer(d_model=model_size, nhead=nhead)
         self.norm = nn.LayerNorm(model_size)
@@ -189,7 +192,7 @@ class VikramAE(nn.Module):
         self.fc = nn.Linear(model_size, vocab_size)
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input):
-        input2 = input.permute(1,0,2)
+        input2 = input.permute(1,0)
         #ipos = torch.arange(input2.size(0), device=input.device)[:,None].expand(input2.shape[:2])
         #src = self.embedding(input2)[0] + self.posembed(ipos)
         src = self.embedding(input2)[0]

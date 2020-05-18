@@ -170,7 +170,10 @@ class GRUTFAE(nn.Module):
         self.model_size=model_size
         self.vocab_size = vocab_size
         assert model_size % 2 == 0
-        self.embedding = nn.GRU(vocab_size, model_size//2, 1, bidirectional=True)
+        self.embedding = nn.Sequential(
+            nn.Embedding(vocab_size, model_size),
+            nn.GRU(model_size, model_size//2, 1, bidirectional=True)
+        )
         self.dropout = nn.Dropout(dropout)
         self.enclayer = nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout)
         self.norm = nn.LayerNorm(model_size)
@@ -180,7 +183,7 @@ class GRUTFAE(nn.Module):
 
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input):
-        input2 = input.permute(1,0,2)
+        input2 = input.permute(1,0)
         src = self.embedding(input2)[0]
         src = self.norm(src)
         out = self.tfmodel(self.dropout(src))
@@ -193,7 +196,7 @@ class NamAE(nn.Module):
         self.vocab_size = vocab_size
         assert model_size % 2 == 0
         self.embedding = nn.Sequential(
-            nn.Linear(vocab_size, model_size),
+            nn.Embedding(vocab_size, model_size),
             nn.LSTM(model_size, model_size//2, 1, bidirectional=True)
         )
         self.dropout = nn.Dropout(dropout)
@@ -208,7 +211,7 @@ class NamAE(nn.Module):
 
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input):
-        src = self.embedding(input.permute(1,0,2))[0]
+        src = self.embedding(input.permute(1,0))[0]
         src = self.norm(src)
         out = self.tfmodel(self.dropout(src))
         return self.fc(out.permute(1,2,0))
@@ -222,7 +225,7 @@ class NamPosAE(nn.Module):
         self.posembed = nn.Embedding(maxlen, model_size)
         assert model_size % 2 == 0
         self.embedding = nn.Sequential(
-            nn.Linear(vocab_size, model_size),
+            nn.Embedding(vocab_size, model_size),
             nn.LSTM(model_size, model_size//2, 1, bidirectional=True)
         )
         self.dropout = nn.Dropout(dropout)
@@ -237,7 +240,7 @@ class NamPosAE(nn.Module):
 
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input):
-        input = input.permute(1,0,2)
+        input = input.permute(1,0)
         ipos = torch.arange(input.size(0), device=input.device)[:,None].expand(input.shape[:2])
         src = self.embedding(input)[0] + self.posembed(ipos)
         src = self.norm(src)
@@ -277,7 +280,7 @@ class LSTMAE(nn.Module):
         super().__init__()
         assert model_size %2 == 0
         self.model_size = model_size
-        self.embed = nn.Linear(vocab_size, self.model_size)
+        self.embed = nn.Embedding(vocab_size, self.model_size)
         self.encoder = nn.LSTM(self.model_size, self.model_size//2, 1, bidirectional=True)
         self.dropout = nn.Dropout(0.1)
         self.attn = AttentionLayer(model_size, model_size, model_size)
@@ -285,7 +288,7 @@ class LSTMAE(nn.Module):
         self.fc = nn.Linear(model_size, vocab_size)
 
     def forward(self, input):
-        outputs = self.dropout(self.embed(input.permute(1,0,2)))
+        outputs = self.dropout(self.embed(input.permute(1,0)))
         outputs, state = self.encoder(outputs)
         outputs, _ = self.attn(outputs, outputs)
         outputs, state = self.decoder(self.dropout(outputs))

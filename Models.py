@@ -32,7 +32,7 @@ class TfAE(nn.Module):
         self.model_size=model_size
         self.maxlen=maxlen
         self.vocab_size = vocab_size
-        self.embedding = nn.Linear(vocab_size, model_size)
+        self.embedding = nn.Embedding(vocab_size, model_size)
         self.posembed = nn.Embedding(maxlen, model_size)
         self.enclayer = nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead)
         self.norm = nn.LayerNorm(model_size)
@@ -40,7 +40,7 @@ class TfAE(nn.Module):
         self.fc = nn.Linear(model_size, vocab_size)
     #Batch-first in (N,S,C), batch-first out (N,C,S)
     def forward(self, input): 
-        input2 = input.permute(1,0,2)
+        input2 = input.permute(1,0)
         ipos = torch.arange(input2.size(0), device=input.device)[:,None].expand(input2.shape[:2])
         src = self.embedding(input2) + self.posembed(ipos)
         out = self.tfmodel(src)
@@ -51,15 +51,15 @@ class CNNAE(nn.Module):
         super().__init__()
         self.model_size=model_size
         self.vocab_size = vocab_size
-        self.embedding = nn.Conv1d(vocab_size, model_size, 3, padding=1)
-        self.norm = nn.BatchNorm1d(model_size)
+        self.embedding = nn.Embedding(vocab_size, model_size)
+        self.norm = nn.LayerNorm(model_size)
         self.encoder = CNNEncoder(model_size)
         self.fc = nn.Linear(model_size, vocab_size)
     
-    #Batch-first in (N,S,C), batch-first out (N,C,S)
+    #Batch-first in (N,S), batch-first out (N,C,S)
     def forward(self, input):
-        embed = self.norm(self.embedding(input.permute(0,2,1)))
-        out = self.encoder(embed.permute(2,0,1))
+        embed = self.norm(self.embedding(input.permute(1,0)))
+        out = self.encoder(embed)
         return self.fc(out).permute(1,2,0)
 
 class XLNetAE(nn.Module):
@@ -68,7 +68,7 @@ class XLNetAE(nn.Module):
         self.d_model=d_model
         self.maxlen=maxlen
         self.vocab_size = vocab_size
-        self.embedding = nn.Linear(vocab_size, d_model)
+        self.embedding = nn.Embedding(vocab_size, d_model)
         self.posembed = nn.Embedding(maxlen, d_model)
         self.relembed = nn.Embedding(2*maxlen, d_model)
         #self.enclayer = XLNetEncoderLayer(d_model=d_model, nhead=2)
@@ -102,9 +102,9 @@ class XLNetAE(nn.Module):
         pos_emb = pos_emb.to(next(self.parameters()))
         return pos_emb
 
-    #Batch-first in (N,S,C), batch-first out (N,C,S)
+    #Batch-first in (N,S), batch-first out (N,C,S)
     def forward(self, input):
-        input2 = input.permute(1,0,2)
+        input2 = input.permute(1,0)
         ipos = torch.arange(input2.size(0), device=input.device)[:,None].expand(input2.shape[:2])
         r = self.relative_positional_encoding(input2.size(0),input2.size(0),input.size(0))
         klen = input2.shape[0]
@@ -123,11 +123,12 @@ class GRUAE(nn.Module):
         self.model_size=model_size
         self.vocab_size = vocab_size
         assert model_size % 2 == 0
-        self.embedding = nn.GRU(vocab_size, model_size//2, 4,\
+        self.embedding = nn.Embedding(vocab_size, model_size)
+        self.cell = nn.GRU(model_size, model_size//2, 4,\
             bidirectional=True, dropout=0.1)
         self.fc = nn.Linear(model_size, vocab_size)
-    #Batch-first in (N,S,C), batch-first out (N,C,S)
+    #Batch-first in (N,S), batch-first out (N,C,S)
     def forward(self, input):
-        input2 = input.permute(1,0,2)
-        src = self.embedding(input2)[0]
+        input2 = input.permute(1,0)
+        src = self.cell(self.embedding(input2))[0]
         return self.fc(src).permute(1,2,0)
