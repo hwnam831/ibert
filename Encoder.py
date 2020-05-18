@@ -53,7 +53,7 @@ class CNNEncoder(nn.Module):
         return memory.permute(2,0,1)
 
 class XLNetEncoderLayer(nn.Module):
-    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation="relu", maxlen=256):
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation="gelu", maxlen=256):
         super().__init__()
         self.self_attn = XLNet.XLNetRelativeAttention(d_model, nhead, dropout=dropout)
         # Implementation of Feedforward model
@@ -67,7 +67,7 @@ class XLNetEncoderLayer(nn.Module):
         self.dropout2 = nn.Dropout(dropout)
         self.maxlen = maxlen
         #self.posembed = nn.Embedding(2*maxlen, d_model)
-        self.activation = nn.ReLU()
+        self.activation = nn.GELU()
 
     def forward(self, h,g,r, src_mask=None, src_key_padding_mask=None):
         r"""Pass the input through the encoder layer.
@@ -93,8 +93,8 @@ class XLNetEncoderLayer(nn.Module):
             h2 = self.linear2(self.dropout(self.activation(self.linear1(h))))
             g2 = self.linear2(self.dropout(self.activation(self.linear1(g))))
         else:  # for backward compatibility
-            h2 = self.linear2(self.dropout(F.relu(self.linear1(h))))
-            g2 = self.linear2(self.dropout(F.relu(self.linear1(g))))
+            h2 = self.linear2(self.dropout(F.gelu(self.linear1(h))))
+            g2 = self.linear2(self.dropout(F.gelu(self.linear1(g))))
         h = h + self.dropout2(h2)
         g = g + self.dropout2(g2)
         h = self.norm2(h)
