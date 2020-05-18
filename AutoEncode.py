@@ -65,7 +65,7 @@ def validate(model, valloader, args):
                 output      = model(xdata)
                 # xdata <- masked index
                 # ydata2 <- answer 
-                ismask = x == Token.mask
+                ismask = xdata == Token.mask if args.seq_type in ['fib', 'arith', 'palin'] else xdata == valset.wordtoix.get('<mask>')
                 mcnt = ismask.sum().item()
                 loss        = F.cross_entropy(output, ydata2, reduction='none')
                 vloss       = vloss + loss.mean().item()
