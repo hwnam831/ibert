@@ -33,7 +33,7 @@ def get_args():
     parser.add_argument(
             "--batch_size",
             type=int,
-            default='128',
+            default='32',
             help='batch size')
     parser.add_argument(
             "--model_size",
@@ -58,14 +58,20 @@ def get_args():
     parser.add_argument(
             "--seq_type",
             type=str,
-            choices= ['fib', 'arith', 'palin', 'pbtc'],
+            choices= ['fib', 'arith', 'palin', 'ptbc', 'ptbw'],
             default='fib',
-            help='fib: fibonacci / arith: arithmetic / palin: palindrome / pbtc: PennTreeBank Character')
+            help='fib: fibonacci / arith: arithmetic / palin: palindrome / ptbc: ptb char / ptbw: ptb word')
     parser.add_argument(
             "--lr",
             type=float,
             default=3e-5,
             help='Default learning rate')
+    parser.add_argument(
+            "--log",
+            type=str,
+            choices= ['true', 'false'],
+            default='false',
+            help='Save result to file')
 
     return parser.parse_args()
 
