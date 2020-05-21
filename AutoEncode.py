@@ -7,7 +7,7 @@ import Options
 import Models
 import Nam
 import Vikram
-from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome
+from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome, copy
 from PTBCDataset import PTBCDataset
 from PTBWDataset import PTBWDataset
 from torch.utils.data import Dataset, DataLoader
@@ -19,16 +19,22 @@ def train(model, trainloader, criterion, optimizer, scheduler):
         tcorrect = 0
         tlen     = 0
         tloss    = 0
+        bits = 0.0
+        maskcount = 0
         for x,y in trainloader:
             xdata       = x.cuda()
             ydata       = y.cuda()
             optimizer.zero_grad()
-            
             output      = model(xdata)
-            
+
+            ismask = xdata != ydata
+            maskcount += ismask.sum().item()
+
             loss        = criterion(output, ydata)
-            loss.backward()
-            tloss       = tloss + loss.item()
+            loss.mean().backward()
+            bits += (loss*ismask).sum().item()
+
+            tloss       = tloss + loss.mean().item()
             nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             
@@ -45,6 +51,11 @@ def train(model, trainloader, criterion, optimizer, scheduler):
         trainingResult.append('train seq acc:\t'+str(tcorrect/tlen))
         trainingResult.append(str('train loss:\t{}'.format(tloss/len(trainloader))))
         trainingResult.append('Current LR:' + str(scheduler.get_last_lr()[0]))
+        
+        #Perplexity  = 2^bit
+        print('Training Perplexity :\t{}'.format(math.exp((bits/maskcount) * math.log(2)))) 
+        trainingResult.append('Training Perplexity :\t{}'.format(math.exp((bits/maskcount) * math.log(2))))
+       
 
 
         return model, trainingResult
@@ -65,7 +76,7 @@ def validate(model, valloader, args):
                 output      = model(xdata)
                 # xdata <- masked index
                 # ydata2 <- answer 
-                ismask = xdata == Token.mask if args.seq_type in ['fib', 'arith', 'palin'] else xdata == valset.wordtoix.get('<mask>')
+                ismask = xdata != ydata2
                 mcnt = ismask.sum().item()
                 loss        = F.cross_entropy(output, ydata2, reduction='none')
                 vloss       = vloss + loss.mean().item()
@@ -87,7 +98,7 @@ def validate(model, valloader, args):
         print('validation loss:\t{}'.format(vloss/len(valloader)))
         accuracyResult.append('validation loss:\t{}'.format(vloss/len(valloader)))
         
-        #Bit per token Under Construction
+        #Perplexity  = 2^bit
         print('Perplexity :\t{}'.format(math.exp((bits/maskcount) * math.log(2)))) 
         accuracyResult.append('Perplexity :\t{}'.format(math.exp((bits/maskcount) * math.log(2))))
 
@@ -120,6 +131,9 @@ if __name__ == '__main__':
     elif args.seq_type == 'palin':
         dataset     = NSPDatasetAE2(palindrome, args.digits, numbers=1, size=args.train_size)
         valset      = NSPDatasetAE2(palindrome, args.digits+4, args.digits+1, numbers=1, size=args.validation_size)
+    elif args.seq_type == 'copy':
+        dataset     = NSPDatasetAE2(copy, args.digits, size=args.train_size)
+        valset      = NSPDatasetAE2(copy, args.digits+4, args.digits+1, size=args.validation_size)
     elif args.seq_type == 'ptbc':
         dataset     = PTBCDataset('train', minSeq = 16, maxSeq = 192) 
         valset      = PTBCDataset('train', minSeq = 192, maxSeq = 224) 
@@ -172,16 +186,19 @@ if __name__ == '__main__':
     valloader   = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
     optimizer   = torch.optim.Adam(model.parameters(), lr=args.lr)
     scheduler   = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.97)
-    criterion   = nn.CrossEntropyLoss()
-
+    criterion   = nn.CrossEntropyLoss(reduction='none')
+    nsamples = len(dataset)
     if args.log == 'true':
         ts = time.gmtime()
         logger(args, ts, 0, str(model))
     for e in range(args.epochs):
         print('\nEpoch #{}:'.format(e+1))
         
+        trainstart = time.time()
         #train the model
         model, trainResult = train(model, trainloader, criterion, optimizer, scheduler)
+        print("Train sequences per second : " + str(nsamples/(time.time()-trainstart)))
+        trainResult.append("Train sequences per second : " + str(nsamples/(time.time()-trainstart)))
 
         #validate the model
         model, valResult = validate(model, valloader, args)

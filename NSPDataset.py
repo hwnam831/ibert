@@ -44,11 +44,18 @@ def count(seed1, seed2, numbers):
     return seq, target
 
 def palindrome(seed1, seed2, numbers):
-    seq = [seed1]
+    seq = [seed2]
     for i in range(1, numbers):
         nstr = str(seq[i-1])
         seq[i] = int(nstr[::-1])
     target = int(str(seq[-1])[::-1])
+    return seq, target
+
+def copy(seed1, seed2, numbers):
+    seq = [seed2]
+    for i in range(1, numbers):
+        seq.append(seed2)
+    target = seed2
     return seq, target
 
 def num2vec(num, ndigits, lendian=True):
@@ -143,7 +150,7 @@ class NSPDatasetAE2(Dataset):
             ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
             s1digits = np.random.randint(1, ndigits+1)
             seed1 = np.random.randint(1, (10**s1digits)-1)
-            seed2 = np.random.randint(max(seed1,10**(ndigits-1)), 10**ndigits)
+            seed2 = np.random.randint(10**(ndigits-1), 10**ndigits)
             seq, target = self.rule(seed1, seed2, self.numbers)
             pos = 1
             self.inputs[idx][0] = Token.delim
@@ -231,7 +238,7 @@ def printseq2(x,y):
 
 if __name__ == '__main__':
     
-    dataset = NSPDatasetAE2(palindrome,5,1, numbers=1)
+    dataset = NSPDatasetAE2(copy,5,1, numbers=2)
     # dataset = NSPDatasetS2S(fib,2,1, numbers=1)
     loader = DataLoader(dataset, batch_size=4)
     for i in range(10):
