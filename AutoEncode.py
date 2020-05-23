@@ -105,7 +105,7 @@ def validate(model, valloader, args):
         return model, accuracyResult
 
 def logger(args, timestamp, epoch, contents):
-    with open(str("log/") + str(time.strftime("%Y-%m-%d %H:%M:%S", timestamp)) + " " + str(args.seq_type) + " " + str(args.net) +".log", "a+") as fd:
+    with open(str("log/") + str(args.exp) + " " + str(time.strftime("%Y-%m-%d %H:%M:%S", timestamp)) + " "+ str(args.seq_type) + " " + str(args.net) +".log", "a+") as fd:
         fd.write('\nEpoch #{}:'.format(epoch))
         fd.write('\n')
         # print model information

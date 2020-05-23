@@ -72,6 +72,10 @@ def get_args():
             choices= ['true', 'false'],
             default='false',
             help='Save result to file')
-
+    parser.add_argument(
+            "--exp",
+            type=int,
+            default=0,
+            help='Experiment number')
     return parser.parse_args()
 
