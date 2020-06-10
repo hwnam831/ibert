@@ -162,10 +162,10 @@ if __name__ == '__main__':
     elif args.net == 'xlnet':
         print('Executing Autoencoder model with XLNet-like Model')
         model = Models.XLNetAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
-    elif args.net == 'nam':
+    elif args.net == 'ibert':
         print('Executing Autoencoder model with IBERT\'s Architecture')
         model = IBERT.IBERTAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
-    elif args.net == 'nampos':
+    elif args.net == 'ibertpos':
         print('Executing Autoencoder model with IBERT+Pos\'s Architecture')
         model = IBERT.IBERTPosAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'ibert2':

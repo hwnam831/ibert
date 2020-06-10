@@ -44,7 +44,7 @@ After cloning the program, you should be able to find a folder name called  `cs5
 I-BERT can be simply run from Bash. Below is the most core command line to run I-BERT. 
 
 ```bash
-python3 AutoEncode.py --net nam
+python3 AutoEncode.py --net ibert
 ```
 
 Then, you should be able to see a message `Executing Autoencoder model with IBERT's Architecture.` After then, if you see the message as in the below screen (`Epoch #1 ... Perplexity : ...`), it is highly likely that I-BERT will be successfully running on your computer.
@@ -76,7 +76,7 @@ Our program supports multiple command-line options to provide a better user expe
 
 | Options      | Default | Description                                                  |
 | ------------ | ------- | ------------------------------------------------------------ |
-| --net        | tf      | Model for your task <br>nam: I-BERT <br>xlnet: XLNet<br>lstm: LSTM seq2seq <br>tf: BERT <br>nampos: I-BERT with positional encoding <br>ibert2: I-BERT2 |
+| --net        | tf      | Model for your task <br>ibert: I-BERT <br>xlnet: XLNet<br>lstm: LSTM seq2seq <br>tf: BERT <br>ibertpos: I-BERT with positional encoding <br>ibert2: I-BERT2 |
 | --seq_type   | fib     | task for prediction <br>fib: addition task (NSP Dataset)<br>copy: copy task (NSP Dataset)<br>palin: reverse task (NSP Dataset)<br>ptbc: Penn Tree Bank Character<br>ptbw: Penn Tree Bank Word |
 | --digits     | 12      | Max number of training digits <br>(Only supports for algorithmic tests) |
 | --batch_size | 32      | Number of epochs                                             |
@@ -88,7 +88,7 @@ Our program supports multiple command-line options to provide a better user expe
 For example, if we want to run a `Penn Tree Bank Word` dataset with 100 epochs with I-BERT, we can try the following: 
 
 ```bash
-python3 AutoEncode.py --net nam --seq_type ptbw --epochs 100
+python3 AutoEncode.py --net ibert --seq_type ptbw --epochs 100
 ```
 
 
@@ -97,7 +97,7 @@ python3 AutoEncode.py --net nam --seq_type ptbw --epochs 100
 
 -----
 
-Just as in paper, we provide multiple kinds of metrics including training sequence accuracy, training/validation accuracy, and perplexity. Below shows an example output at epoch 50 after executing `python3 AutoEncode.py --net nam`.
+Just as in paper, we provide multiple kinds of metrics including training sequence accuracy, training/validation accuracy, and perplexity. Below shows an example output at epoch 50 after executing `python3 AutoEncode.py --net ibert`.
 
 ```
 Epoch #50:
@@ -128,11 +128,11 @@ To reproduce the same experiment result as in I-BERT, please use the following c
 If you choose to log the experiment results, they will be saved in the directory `/log/`. The name of the log file follows the format below. 
 
 ```
-1 2020-05-23 04/25/16 fib nam.log
+1 2020-05-23 04/25/16 fib ibert.log
 ```
 
 - 1 here represents the identifier number of each experiment produced by `--exp <N>  ` where `<N>` is an integer
 - 2020-05-23 refers to `year-month-date`
 - 04/25/16 shows the `hour/min/sec` when the program is executed for the first time. 
 - `fib` is the dataset used for the experiment produced by `--seq_type <dataset> ` where `<dataset>` can be among `fib, copy, palin, ptbc, ptbw` 
-- `nam` is the model used for the experiment produced by `--net <model>` where `<model>` can be among `nam, xlnet, lstm, tf, nampos, ibert2`.
+- `ibert` is the model used for the experiment produced by `--net <model>` where `<model>` can be among `ibert, xlnet, lstm, tf, ibertpos, ibert2`.
