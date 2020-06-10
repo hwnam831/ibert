@@ -5,7 +5,7 @@ import numpy as np
 import argparse
 import Options
 import Models
-import Nam
+import IBERT
 import IBERT2
 from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome, copy
 from PTBCDataset import PTBCDataset
@@ -163,12 +163,12 @@ if __name__ == '__main__':
         print('Executing Autoencoder model with XLNet-like Model')
         model = Models.XLNetAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'nam':
-        print('Executing Autoencoder model with Nam\'s Architecture')
-        model = Nam.NamAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
+        print('Executing Autoencoder model with IBERT\'s Architecture')
+        model = IBERT.IBERTAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'nampos':
-        print('Executing Autoencoder model with Nam+Pos\'s Architecture')
-        model = Nam.NamPosAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
-    elif args.net == 'vikram':
+        print('Executing Autoencoder model with IBERT+Pos\'s Architecture')
+        model = IBERT.IBERTPosAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
+    elif args.net == 'ibert2':
         print('Executing Autoencoder model with IBERT2\'s Architecture')
         model = IBERT2.IBERT2AE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads, num_layers=args.num_layers).cuda()
     elif args.net == 'gru':
@@ -176,7 +176,7 @@ if __name__ == '__main__':
         model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()
     elif args.net == 'lstm':
         print('Executing Autoencoder model with LSTM including Attention')
-        model = Nam.LSTMAE(args.model_size, vocab_size = vocab_size).cuda()
+        model = IBERT.LSTMAE(args.model_size, vocab_size = vocab_size).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()

@@ -189,7 +189,7 @@ class GRUTFAE(nn.Module):
         out = self.tfmodel(self.dropout(src))
         return self.fc(out).permute(1,2,0)
 
-class NamAE(nn.Module):
+class IBERTAE(nn.Module):
     def __init__(self, model_size=512, nhead=4, num_layers=12, vocab_size=16, dropout=0.1):
         super().__init__()
         self.model_size=model_size
@@ -216,7 +216,7 @@ class NamAE(nn.Module):
         out = self.tfmodel(self.dropout(src))
         return self.fc(out.permute(1,2,0))
 
-class NamPosAE(nn.Module):
+class IBERTPosAE(nn.Module):
     def __init__(self, model_size=512, nhead=4, num_layers=12, vocab_size=16, dropout=0.1, maxlen=128):
         super().__init__()
         self.model_size=model_size

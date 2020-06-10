@@ -30,7 +30,7 @@ While I-BERT does not require strict hardware requirements, your GPU must suppor
 Please clone the program into your local work environment using the command provided below. 
 
 ```{bash}
-git clone https://github.com/msharmavikram/cs546project.git
+git clone https://github.com/msharmaibert2/cs546project.git
 ```
 
 After cloning the program, you should be able to find a folder name called  `cs546project` where I-BERT is located.
@@ -47,7 +47,7 @@ I-BERT can be simply run from Bash. Below is the most core command line to run I
 python3 AutoEncode.py --net nam
 ```
 
-Then, you should be able to see a message `Executing Autoencoder model with Nam's Architecture.` After then, if you see the message as in the below screen (`Epoch #1 ... Perplexity : ...`), it is highly likely that I-BERT will be successfully running on your computer.
+Then, you should be able to see a message `Executing Autoencoder model with IBERT's Architecture.` After then, if you see the message as in the below screen (`Epoch #1 ... Perplexity : ...`), it is highly likely that I-BERT will be successfully running on your computer.
 
 ```
 Epoch #1:
@@ -76,7 +76,7 @@ Our program supports multiple command-line options to provide a better user expe
 
 | Options      | Default | Description                                                  |
 | ------------ | ------- | ------------------------------------------------------------ |
-| --net        | tf      | Model for your task <br>nam: I-BERT <br>xlnet: XLNet<br>lstm: LSTM seq2seq <br>tf: BERT <br>nampos: I-BERT with positional encoding <br>vikram: I-BERT2 |
+| --net        | tf      | Model for your task <br>nam: I-BERT <br>xlnet: XLNet<br>lstm: LSTM seq2seq <br>tf: BERT <br>nampos: I-BERT with positional encoding <br>ibert2: I-BERT2 |
 | --seq_type   | fib     | task for prediction <br>fib: addition task (NSP Dataset)<br>copy: copy task (NSP Dataset)<br>palin: reverse task (NSP Dataset)<br>ptbc: Penn Tree Bank Character<br>ptbw: Penn Tree Bank Word |
 | --digits     | 12      | Max number of training digits <br>(Only supports for algorithmic tests) |
 | --batch_size | 32      | Number of epochs                                             |
@@ -135,4 +135,4 @@ If you choose to log the experiment results, they will be saved in the directory
 - 2020-05-23 refers to `year-month-date`
 - 04/25/16 shows the `hour/min/sec` when the program is executed for the first time. 
 - `fib` is the dataset used for the experiment produced by `--seq_type <dataset> ` where `<dataset>` can be among `fib, copy, palin, ptbc, ptbw` 
-- `nam` is the model used for the experiment produced by `--net <model>` where `<model>` can be among `nam, xlnet, lstm, tf, nampos, vikram`.
+- `nam` is the model used for the experiment produced by `--net <model>` where `<model>` can be among `nam, xlnet, lstm, tf, nampos, ibert2`.

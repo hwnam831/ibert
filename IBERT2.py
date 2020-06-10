@@ -109,7 +109,7 @@ class RelativeAttention(nn.Module):
 
         return output_h
 
-class NamEncoderLayer(nn.Module):
+class IBERTEncoderLayer(nn.Module):
     def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation="relu", maxlen=128):
         super().__init__()
         self.self_attn = RelativeAttention(d_model, nhead, dropout=dropout)
@@ -199,7 +199,7 @@ class IBERT2AE(nn.Module):
         out = self.tfmodel(src)
         return self.fc(out).permute(1,2,0)
 
-class NamAE(nn.Module):
+class IBERTAE(nn.Module):
     def __init__(self, model_size=512, maxlen=128, vocab_size=16):
         super().__init__()
         self.model_size=model_size
@@ -207,7 +207,7 @@ class NamAE(nn.Module):
         self.vocab_size = vocab_size
         self.embedding = nn.Linear(vocab_size, model_size)
         self.posembed = nn.Embedding(maxlen, model_size)
-        self.enclayer = NamEncoderLayer(d_model=model_size, nhead=2)
+        self.enclayer = IBERTEncoderLayer(d_model=model_size, nhead=2)
         self.norm = nn.LayerNorm(model_size)
         self.tfmodel = nn.TransformerEncoder(self.enclayer, num_layers=6, norm=self.norm)
         self.fc = nn.Linear(model_size, vocab_size)
