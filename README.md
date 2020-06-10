@@ -1,4 +1,4 @@
-## I-Bert Tutorial
+## I-BERT Tutorial
 
 ### Requirements
 
@@ -116,7 +116,7 @@ Perplexity :	1.15058179827412
 
 To reproduce the same experiment result as in I-BERT, please use the following command. This command will run all the experiments used in the paper. Results will be automatically saved in directory `/log/`.
 
-```sh
+```bash
 ./run.sh
 ```
 
