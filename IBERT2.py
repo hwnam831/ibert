@@ -149,7 +149,7 @@ class IBERTEncoderLayer(nn.Module):
 
         return h
 
-class VikEncoderLayer(nn.Module):
+class IBERT2EncoderLayer(nn.Module):
     def __init__(self, d_model, nhead, dropout=0.1):
         super().__init__()
         self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
@@ -185,7 +185,7 @@ class IBERT2AE(nn.Module):
             nn.LSTM(model_size, model_size//2, 1, bidirectional=True)
         )
         self.posembed = nn.Embedding(maxlen, model_size)
-        self.enclayer = VikEncoderLayer(d_model=model_size, nhead=nhead)
+        self.enclayer = IBERT2EncoderLayer(d_model=model_size, nhead=nhead)
         self.norm = nn.LayerNorm(model_size)
         self.tfmodel = nn.TransformerEncoder(self.enclayer, \
             num_layers=num_layers, norm=self.norm)
