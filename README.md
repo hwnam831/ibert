@@ -30,10 +30,10 @@ While I-BERT does not require strict hardware requirements, your GPU must suppor
 Please clone the program into your local work environment using the command provided below. 
 
 ```{bash}
-git clone https://github.com/msharmaibert2/cs546project.git
+git clone https://github.com/msharmaibert2/ibert.git
 ```
 
-After cloning the program, you should be able to find a folder name called  `cs546project` where I-BERT is located.
+After cloning the program, you should be able to find a folder name called  `ibert` where I-BERT is located.
 
 
 
