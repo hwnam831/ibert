@@ -6,7 +6,7 @@ import argparse
 import Options
 import Models
 import Nam
-import Vikram
+import IBERT2
 from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome, copy
 from PTBCDataset import PTBCDataset
 from PTBWDataset import PTBWDataset
@@ -169,8 +169,8 @@ if __name__ == '__main__':
         print('Executing Autoencoder model with Nam+Pos\'s Architecture')
         model = Nam.NamPosAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'vikram':
-        print('Executing Autoencoder model with Vikram\'s Architecture')
-        model = Vikram.VikramAE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads, num_layers=args.num_layers).cuda()
+        print('Executing Autoencoder model with IBERT2\'s Architecture')
+        model = IBERT2.IBERT2AE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads, num_layers=args.num_layers).cuda()
     elif args.net == 'gru':
         print('Executing Autoencoder model with GRU w.o. Attention')
         model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()

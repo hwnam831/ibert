@@ -173,7 +173,7 @@ class VikEncoderLayer(nn.Module):
         return src
 
 
-class VikramAE(nn.Module):
+class IBERT2AE(nn.Module):
     def __init__(self, model_size=512, num_layers=6, nhead=8, maxlen=128, vocab_size=16):
         super().__init__()
         self.model_size=model_size
