@@ -10,6 +10,7 @@ import IBERT2
 from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome, copy
 from PTBCDataset import PTBCDataset
 from PTBWDataset import PTBWDataset
+from AttentionMatrix import AMEncoder, AMEncoderLayer, AttentionMatrix
 from torch.utils.data import Dataset, DataLoader
 import time
 import math
@@ -177,6 +178,9 @@ if __name__ == '__main__':
     elif args.net == 'lstm':
         print('Executing Autoencoder model with LSTM including Attention')
         model = IBERT.LSTMAE(args.model_size, vocab_size = vocab_size).cuda()
+    elif args.net == 'nam':
+        print('Executing NAM Autoencoder model')
+        model = AMEncoder(args.model_size, nhead=args.num_heads, num_layers=args.num_layers, vocab_size = vocab_size).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()

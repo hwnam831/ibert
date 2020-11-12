@@ -12,7 +12,7 @@ def get_args():
     parser.add_argument(
             "--net",
             type=str,
-            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'ibert', 'ibertpos', 'noor', 'lan', 'ibert2', 'bruno'],
+            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'ibert', 'ibertpos', 'noor', 'lan', 'ibert2', 'bruno', 'nam'],
             default='tf',
             help='network choices')
     parser.add_argument(
@@ -33,17 +33,17 @@ def get_args():
     parser.add_argument(
             "--batch_size",
             type=int,
-            default='32',
+            default='64',
             help='batch size')
     parser.add_argument(
             "--model_size",
             type=int,
-            default='768',
+            default='512',
             help='internal channel dimension')
     parser.add_argument(
             "--num_heads",
             type=int,
-            default='12',
+            default='8',
             help='number of heads in TF-based models')
     parser.add_argument(
             "--digits",
@@ -53,7 +53,7 @@ def get_args():
     parser.add_argument(
             "--num_layers",
             type=int,
-            default='12',
+            default='8',
             help='Number of layers in the model')
     parser.add_argument(
             "--seq_type",
@@ -64,7 +64,7 @@ def get_args():
     parser.add_argument(
             "--lr",
             type=float,
-            default=3e-5,
+            default=1e-4,
             help='Default learning rate')
     parser.add_argument(
             "--log",
