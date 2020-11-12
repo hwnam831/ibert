@@ -10,7 +10,7 @@ import IBERT2
 from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome, copy
 from PTBCDataset import PTBCDataset
 from PTBWDataset import PTBWDataset
-from AttentionMatrix import AMEncoder, AMEncoderLayer, AttentionMatrix
+from AttentionMatrix import AMEncoder, AMIBERT
 from torch.utils.data import Dataset, DataLoader
 import time
 import math
@@ -171,7 +171,7 @@ if __name__ == '__main__':
         model = IBERT.IBERTPosAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
     elif args.net == 'ibert2':
         print('Executing Autoencoder model with IBERT2\'s Architecture')
-        model = IBERT2.IBERT2AE(args.model_size, vocab_size = vocab_size, nhead=args.num_heads, num_layers=args.num_layers).cuda()
+        model = AMIBERT(args.model_size, vocab_size = vocab_size, nhead=args.num_heads, num_layers=args.num_layers).cuda()
     elif args.net == 'gru':
         print('Executing Autoencoder model with GRU w.o. Attention')
         model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()

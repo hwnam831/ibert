@@ -96,8 +96,8 @@ class NSPDatasetAE(Dataset):
     def __getitem__(self, idx):
         if not self.iscreated[idx]:
             ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
-            seed1 = np.random.randint(1, 10**ndigits)
-            seed2 = np.random.randint(max(seed1,10**(ndigits-1)), 10**ndigits)
+            seed1 = np.random.randint(1, 10**ndigits, dtype=np.int64)
+            seed2 = np.random.randint(max(seed1,10**(ndigits-1)), 10**ndigits, dtype=np.int64)
             seq, target = self.rule(seed1, seed2, self.numbers)
             pos = 1
             self.inputs[idx][0][Token.delim] = 1
@@ -148,9 +148,9 @@ class NSPDatasetAE2(Dataset):
     def __getitem__(self, idx):
         if not self.iscreated[idx]:
             ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
-            s1digits = np.random.randint(1, ndigits+1)
-            seed1 = np.random.randint(1, (10**s1digits)-1)
-            seed2 = np.random.randint(10**(ndigits-1), 10**ndigits)
+            s1digits = np.random.randint(1, ndigits+1, dtype=np.int64)
+            seed1 = np.random.randint(1, (10**s1digits)-1, dtype=np.int64)
+            seed2 = np.random.randint(10**(ndigits-1), 10**ndigits, dtype=np.int64)
             seq, target = self.rule(seed1, seed2, self.numbers)
             pos = 1
             self.inputs[idx][0] = Token.delim
@@ -173,7 +173,7 @@ class NSPDatasetAE2(Dataset):
             self.targets[idx][pos+len(y)] = Token.eos
 
             if pos+len(y)+1 < self.maxlen:
-                shift = np.random.randint(0, self.maxlen-pos-len(y)-1)
+                shift = np.random.randint(0, self.maxlen-pos-len(y)-1, dtype=np.int64)
                 curinput = self.inputs[idx][:pos+len(y)+1].copy()
                 curtarget = self.targets[idx][:pos+len(y)+1].copy()
                 self.inputs[idx][:shift] = Token.pad
@@ -207,8 +207,8 @@ class NSPDatasetS2S(Dataset):
     def __getitem__(self, idx):
         if not self.iscreated[idx]:
             ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
-            seed1 = np.random.randint(10**(ndigits-1), 10**ndigits)
-            seed2 = np.random.randint(10**(ndigits-1), 10**ndigits)
+            seed1 = np.random.randint(10**(ndigits-1), 10**ndigits, dtype=np.int64)
+            seed2 = np.random.randint(10**(ndigits-1), 10**ndigits, dtype=np.int64)
             seq, target = self.rule(seed1, seed2, self.numbers)
             pos = 1
             self.inputs[idx][0] = Token.delim
