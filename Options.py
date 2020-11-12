@@ -38,12 +38,12 @@ def get_args():
     parser.add_argument(
             "--model_size",
             type=int,
-            default='512',
+            default='256',
             help='internal channel dimension')
     parser.add_argument(
             "--num_heads",
             type=int,
-            default='8',
+            default='4',
             help='number of heads in TF-based models')
     parser.add_argument(
             "--digits",
@@ -53,7 +53,7 @@ def get_args():
     parser.add_argument(
             "--num_layers",
             type=int,
-            default='8',
+            default='4',
             help='Number of layers in the model')
     parser.add_argument(
             "--seq_type",
