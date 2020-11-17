@@ -10,7 +10,7 @@ import IBERT2
 from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome, copy
 from PTBCDataset import PTBCDataset
 from PTBWDataset import PTBWDataset
-from AttentionMatrix import AMEncoder, AMIBERT
+from AttentionMatrix import AMEncoder, AMIBERT, LinearAttention
 from torch.utils.data import Dataset, DataLoader
 import time
 import math
@@ -36,7 +36,7 @@ def train(model, trainloader, criterion, optimizer, scheduler):
             bits += (loss*ismask).sum().item()
 
             tloss       = tloss + loss.mean().item()
-            nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            nn.utils.clip_grad_norm_(model.parameters(), 0.5)
             optimizer.step()
             
             pred        = output.argmax(axis=1)
@@ -154,33 +154,65 @@ if __name__ == '__main__':
     else:
         vocab_size = 16
 
+    if args.model_size == 'base':
+        dmodel = 768
+        nhead = 12
+        num_layers = 12
+    elif args.model_size == 'mini':
+        dmodel = 256
+        nhead = 4
+        num_layers = 4
+    elif args.model_size == 'small':
+        dmodel = 512
+        nhead = 8
+        num_layers = 4
+    elif args.model_size == 'medium':
+        dmodel = 512
+        nhead = 8
+        num_layers = 8
+    elif args.model_size == 'tiny':
+        dmodel = 128
+        nhead = 2
+        num_layers = 2
+    elif args.model_size == 'custom':
+        dmodel = 512
+        nhead = 4
+        num_layers = 4
+    else:
+        print('shouldnt be here')
+        exit(-1)
+
+
     if args.net == 'tf':
         print('Executing Autoencoder model with TfAE Model')
-        model = Models.TfAE(args.model_size, nhead=args.num_heads, num_layers=args.num_layers, vocab_size = vocab_size).cuda()
+        model = Models.TfAE(dmodel, nhead=nhead, num_layers=num_layers, vocab_size = vocab_size).cuda()
     elif args.net == 'cnn':
         print('Executing Autoencoder model with CNNAE Model')
-        model = Models.CNNAE(args.model_size, vocab_size = vocab_size).cuda()
+        model = Models.CNNAE(dmodel, vocab_size = vocab_size).cuda()
     elif args.net == 'xlnet':
         print('Executing Autoencoder model with XLNet-like Model')
-        model = Models.XLNetAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
+        model = Models.XLNetAE(dmodel, vocab_size = vocab_size, num_layers=num_layers, nhead=nhead).cuda()
     elif args.net == 'ibert':
         print('Executing Autoencoder model with IBERT\'s Architecture')
-        model = IBERT.IBERTAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
+        model = IBERT.IBERTAE(dmodel, vocab_size = vocab_size, num_layers=num_layers, nhead=nhead).cuda()
     elif args.net == 'ibertpos':
         print('Executing Autoencoder model with IBERT+Pos\'s Architecture')
-        model = IBERT.IBERTPosAE(args.model_size, vocab_size = vocab_size, num_layers=args.num_layers, nhead=args.num_heads).cuda()
+        model = IBERT.IBERTPosAE(dmodel, vocab_size = vocab_size, num_layers=num_layers, nhead=nhead).cuda()
     elif args.net == 'ibert2':
         print('Executing Autoencoder model with IBERT2\'s Architecture')
-        model = AMIBERT(args.model_size, vocab_size = vocab_size, nhead=args.num_heads, num_layers=args.num_layers).cuda()
+        model = AMIBERT(dmodel, vocab_size = vocab_size, nhead=nhead, num_layers=num_layers).cuda()
     elif args.net == 'gru':
         print('Executing Autoencoder model with GRU w.o. Attention')
-        model = Models.GRUAE(args.model_size, vocab_size = vocab_size).cuda()
+        model = Models.GRUAE(dmodel, vocab_size = vocab_size).cuda()
     elif args.net == 'lstm':
         print('Executing Autoencoder model with LSTM including Attention')
-        model = IBERT.LSTMAE(args.model_size, vocab_size = vocab_size).cuda()
+        model = IBERT.LSTMAE(dmodel, vocab_size = vocab_size).cuda()
     elif args.net == 'nam':
         print('Executing NAM Autoencoder model')
-        model = AMEncoder(args.model_size, nhead=args.num_heads, num_layers=args.num_layers, vocab_size = vocab_size).cuda()
+        model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size).cuda()
+    elif args.net == 'linear':
+        print('Executing Linear Attention Autoencoder model')
+        model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=LinearAttention).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()

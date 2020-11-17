@@ -12,7 +12,7 @@ def get_args():
     parser.add_argument(
             "--net",
             type=str,
-            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'ibert', 'ibertpos', 'noor', 'lan', 'ibert2', 'bruno', 'nam'],
+            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'ibert', 'ibertpos', 'ibert2', 'nam', 'linear'],
             default='tf',
             help='network choices')
     parser.add_argument(
@@ -37,24 +37,15 @@ def get_args():
             help='batch size')
     parser.add_argument(
             "--model_size",
-            type=int,
-            default='256',
-            help='internal channel dimension')
-    parser.add_argument(
-            "--num_heads",
-            type=int,
-            default='4',
-            help='number of heads in TF-based models')
+            type=str,
+            default='mini',
+            choices=['tiny','mini','small','medium','base','custom'],
+            help='Size of the model based on Google\'s bert configurations')
     parser.add_argument(
             "--digits",
             type=int,
             default='12',
             help='Max number of digits')
-    parser.add_argument(
-            "--num_layers",
-            type=int,
-            default='4',
-            help='Number of layers in the model')
     parser.add_argument(
             "--seq_type",
             type=str,
@@ -64,7 +55,7 @@ def get_args():
     parser.add_argument(
             "--lr",
             type=float,
-            default=1e-4,
+            default=2e-4,
             help='Default learning rate')
     parser.add_argument(
             "--log",
