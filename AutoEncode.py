@@ -10,7 +10,7 @@ import IBERT2
 from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome, copy
 from PTBCDataset import PTBCDataset
 from PTBWDataset import PTBWDataset
-from AttentionMatrix import AMEncoder, AMIBERT, LinearAttention
+from AttentionMatrix import AMEncoder, AMIBERT, LinearAttention, RecurrentAM
 from torch.utils.data import Dataset, DataLoader
 import time
 import math
@@ -209,7 +209,7 @@ if __name__ == '__main__':
         model = IBERT.LSTMAE(dmodel, vocab_size = vocab_size).cuda()
     elif args.net == 'nam':
         print('Executing NAM Autoencoder model')
-        model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size).cuda()
+        model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=RecurrentAM).cuda()
     elif args.net == 'linear':
         print('Executing Linear Attention Autoencoder model')
         model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=LinearAttention).cuda()
@@ -224,6 +224,7 @@ if __name__ == '__main__':
     scheduler   = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.97)
     criterion   = nn.CrossEntropyLoss(reduction='none')
     nsamples = len(dataset)
+    #torch.autograd.set_detect_anomaly(True)
     if args.log == 'true':
         ts = time.gmtime()
         logger(args, ts, 0, str(model))

@@ -13,6 +13,11 @@ def unitrelu(v):
 def unitelu(v):
     vec = v/torch.norm(v,dim=-1).unsqueeze(-1)
     return F.elu(vec)
+
+def eluunit(v):
+    vec = F.elu(v)
+    return vec/torch.norm(vec,dim=-1).unsqueeze(-1)
+
 def unitsq(v):
     return v/torch.sqrt(torch.norm(v,dim=-1)).unsqueeze(-1)
 
@@ -26,27 +31,74 @@ def softmaxnorm(v):
 def tanhnorm(v):
     return torch.tanh(v)/math.sqrt(v.size(-1))
 '''
-class AttentionMatrix(nn.Module):
-    def __init__(self, d_model, nhead, dropout=0.1, sigma=unitnorm):
+class RecurrentAM(nn.Module):
+    def __init__(self, d_model, nhead, sigma=unitnorm):
         super().__init__()
-        self.Wq = nn.Linear(d_model, d_model)
-        self.Wk = nn.Linear(d_model, d_model)
-        self.Wv = nn.Linear(d_model, d_model)
+        assert d_model % nhead == 0
+        self.nhead = nhead
+        self.dim = d_model//nhead
+        self.Wq = nn.Linear(d_model*2, d_model)
+        self.Wk = nn.Linear(d_model*2, d_model)
+        self.Wv = nn.Linear(d_model*2, d_model)
         self.Wo = nn.Linear(d_model, d_model)
-        self.dropout = nn.Dropout(dropout)
         self.sigma = sigma
-    def forward(self, h):
-        #assuming (S,N,C) layout
-        k = self.Wk(h) #(S,N,Dk)
-        v = self.Wv(h) #(S,N,Dv)
-        k = self.sigma(k)
-        A = torch.einsum('snk,snv->nkv', k,v)
-        q = self.Wq(h) #(S,N,Dq=Dk)
-        q = self.sigma(q)
-        out = torch.einsum('snq,nqv->snv',q,A)
-        out = self.dropout(self.Wo(out)+h)
+    def forward(self, x):
+        #assuming (S,B,C) layout
+        B,C = x.size(1), x.size(2)
+        r = None
+        A = torch.zeros([B, self.nhead, self.dim, self.dim], device=x.device)
+        for x_i in x: #(B,C) shapes
+            if r is not None:
+                x_r = torch.cat([x_i,r],dim=-1)
+            else:
+                x_r = torch.cat([x_i,torch.zeros_like(x_i)],dim=-1)
+            k = self.Wk(x_r).reshape(B,self.nhead,-1) #(S,B,n,Dk/n)
+            v = self.Wv(x_r).reshape(B,self.nhead,-1) #(S,B,n,Dv/n)
+            #k = self.sigma(k)
+            k = unitelu(k)
+            A = A + torch.einsum('bnq,bnv->bnvq', k,v)
+            q = self.Wq(x_r).reshape(B,self.nhead,-1) #(S,B,n,Dq=Dk/n)
+            q = self.sigma(q)
+            r = torch.einsum('bnq,bnvq->bnv',q,A).reshape(B,-1)
+            #r = torch.matmul(q,A).view(B,-1)
+        out = self.Wo(r)
         return out, (k,q)
 '''
+
+class RecurrentAM(nn.Module):
+    def __init__(self, d_model, nhead, sigma=unitnorm):
+        super().__init__()
+        assert d_model % nhead == 0
+        self.nhead = nhead
+        self.d_model = d_model
+        self.dim = d_model//nhead
+        self.Wqkv = nn.GRUCell(d_model*2, d_model*3)
+        self.Wo = nn.Linear(d_model, d_model)
+        self.sigma = sigma
+    def forward(self, x):
+        #assuming (S,B,C) layout
+        B,C = x.size(1), x.size(2)
+        r = None
+        A = torch.zeros([B, self.nhead, self.dim, self.dim], device=x.device)
+        h = None
+        for x_i in x: #(B,C) shapes
+            if r is not None:
+                x_r = torch.cat([x_i,r],dim=-1)
+            else:
+                x_r = torch.cat([x_i,torch.zeros_like(x_i)],dim=-1)
+            if h is None:
+                h = self.Wqkv(x_r)
+            else:
+                h = self.Wqkv(x_r,h)
+            k = unitelu(h[:,self.d_model:2*self.d_model].reshape(B,self.nhead,-1))
+            v = h[:,2*self.d_model:3*self.d_model].reshape(B,self.nhead,-1)
+            A = A + torch.einsum('bnq,bnv->bnvq', k,v)
+            q = h[:,:self.d_model].reshape(B,self.nhead,-1)
+            q = self.sigma(q)
+            r = torch.einsum('bnq,bnvq->bnv',q,A).reshape(B,-1)
+        out = self.Wo(r)
+        return out, (k,q)
+
 class AttentionMatrix(nn.Module):
     def __init__(self, d_model, nhead, sigma=unitnorm):
         super().__init__()
@@ -62,7 +114,8 @@ class AttentionMatrix(nn.Module):
         S,B = h.size(0), h.size(1)
         k = self.Wk(h).reshape(S,B,self.nhead,-1) #(S,B,n,Dk/n)
         v = self.Wv(h).reshape(S,B,self.nhead,-1) #(S,B,n,Dv/n)
-        k = self.sigma(k)
+        #k = self.sigma(k)
+        k = unitelu(k)
         A = torch.einsum('sbnq,sbnv->bnvq', k,v)
         q = self.Wq(h).reshape(S,B,self.nhead,-1) #(S,B,n,Dq=Dk/n)
         q = self.sigma(q)
@@ -84,12 +137,12 @@ class LinearAttention(nn.Module):
         k = self.Wk(h).reshape(S,B,self.nhead,-1) #(S,B,n,Dk/n)
         v = self.Wv(h).reshape(S,B,self.nhead,-1) #(S,B,n,Dv/n)
         k = F.elu(k)+1
-        #k = unitsq(k)
+        #k = unitelu(k)
         ksum = k.sum(dim=0) #(B,n, Dk)
         A = torch.einsum('sbnq,sbnv->bnvq', k,v)
         q = self.Wq(h).reshape(S,B,self.nhead,-1) #(S,B,n,Dq=Dk/n)
         q = F.elu(q)+1
-        #q = unitsq(q)
+        #q = unitnorm(q)
         Z = 1/torch.einsum('sbnq,bnq->sbn',q,ksum)
         out = torch.einsum('sbnq,bnvq,sbn->sbnv',q,A,Z).reshape(S,B,-1)
         out = self.Wo(out)
@@ -143,8 +196,8 @@ class AMEncoder(nn.Module):
     def forward(self, input, print_kq=False):
         input2 = input.permute(1,0)
         ipos = torch.arange(input2.size(0), device=input.device)[:,None].expand(input2.shape[:2])
-        src = self.embedding(input2)
-        h = src + self.posembed(ipos)
+        h = self.embedding(input2)
+        #h = h + self.posembed(ipos)
         for layer in self.encoder:
             h, kq = layer(h)
         #out = torch.cat(out,dim=-1)
@@ -163,7 +216,7 @@ class AMIBERT(nn.Module):
         assert d_model%2 == 0
         self.embedding = nn.Sequential(
             nn.Embedding(vocab_size, d_model),
-            nn.GRU(d_model, d_model//2, 1, bidirectional=True)
+            nn.LSTM(d_model, d_model//2, 1, bidirectional=True)
         )
         self.posembed = nn.Embedding(maxlen, d_model)
         self.encoder = nn.ModuleList([
