@@ -33,7 +33,7 @@ def get_args():
     parser.add_argument(
             "--batch_size",
             type=int,
-            default='64',
+            default='128',
             help='batch size')
     parser.add_argument(
             "--model_size",
@@ -44,7 +44,7 @@ def get_args():
     parser.add_argument(
             "--digits",
             type=int,
-            default='12',
+            default='8',
             help='Max number of digits')
     parser.add_argument(
             "--seq_type",

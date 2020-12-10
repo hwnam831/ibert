@@ -4,3 +4,6 @@
 ☐ Memory Detaching
 ☐ S2S
 ☐ Decoding speedup
+☐ Softmax mode
+☐ character dataset - copy, palin
+☐ Generalizing addition task

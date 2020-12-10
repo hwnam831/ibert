@@ -26,7 +26,8 @@ def unitmn(v):
     return v/mn.unsqueeze(-1)
 
 def softmaxnorm(v):
-    return F.softmax(v,dim=-1)
+    sqrtd = 1/math.sqrt(v.size(-1))
+    return F.softmax(v*sqrtd,dim=-1)
 
 def tanhnorm(v):
     return torch.tanh(v)/math.sqrt(v.size(-1))
@@ -109,6 +110,7 @@ class AttentionMatrix(nn.Module):
         self.Wv = nn.Linear(d_model, d_model)
         self.Wo = nn.Linear(d_model, d_model)
         self.sigma = sigma
+        #self.sigma = nn.LayerNorm(d_model//nhead)
     def forward(self, h):
         #assuming (S,B,C) layout
         S,B = h.size(0), h.size(1)
