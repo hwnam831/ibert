@@ -132,3 +132,55 @@ class GRUAE(nn.Module):
         input2 = input.permute(1,0)
         src = self.cell(self.embedding(input2))[0]
         return self.fc(src).permute(1,2,0)
+
+# From https://github.com/pytorch/fairseq/blob/master/fairseq/models/lstm.py
+class AttentionLayer(nn.Module):
+    def __init__(self, input_embed_dim, source_embed_dim, output_embed_dim, bias=False):
+        super().__init__()
+
+        self.input_proj = nn.Linear(input_embed_dim, source_embed_dim, bias=bias)
+        self.output_proj = nn.Linear(input_embed_dim + source_embed_dim, output_embed_dim, bias=bias)
+
+    def forward(self, input, source_hids):
+        # input: tgtlen x bsz x input_embed_dim
+        # source_hids: srclen x bsz x source_embed_dim
+
+        # x: bsz x source_embed_dim
+        x = self.input_proj(input)
+
+        # compute attention
+        #attn_scores = (source_hids * x.unsqueeze(0)).sum(dim=2)
+        attn_scores = torch.einsum('sbh,tbh->tsb', source_hids, x)
+
+        attn_scores = F.softmax(attn_scores, dim=1)  # srclen x bsz
+
+        # sum weighted sources
+        #x = (attn_scores.unsqueeze(2) * source_hids).sum(dim=0)
+        x = torch.einsum('tsb, sbh->tbh',attn_scores, source_hids)
+
+        x = torch.tanh(self.output_proj(torch.cat((x, input), dim=-1)))
+        return x, attn_scores
+
+class LSTMAE(nn.Module):
+    def __init__(self, model_size, num_layers=1, vocab_size=16, bidirectional=True):
+        super().__init__()
+        
+        self.model_size = model_size
+        self.embed = nn.Embedding(vocab_size, self.model_size)
+        if bidirectional:
+            assert model_size %2 == 0
+            self.encoder = nn.LSTM(self.model_size, self.model_size//2, num_layers=num_layers, bidirectional=True)
+            self.decoder = nn.LSTM(self.model_size, self.model_size//2, num_layers=num_layers, bidirectional=True)
+        else:
+            self.encoder = nn.LSTM(self.model_size, self.model_size, num_layers=num_layers, bidirectional=False)
+            self.decoder = nn.LSTM(self.model_size, self.model_size, num_layers=num_layers, bidirectional=False)
+        self.dropout = nn.Dropout(0.1)
+        self.attn = AttentionLayer(model_size, model_size, model_size)
+        self.fc = nn.Linear(model_size, vocab_size)
+
+    def forward(self, input):
+        outputs = self.dropout(self.embed(input.permute(1,0)))
+        outputs, state = self.encoder(outputs)
+        outputs, _ = self.attn(outputs, outputs)
+        outputs, state = self.decoder(self.dropout(outputs))
+        return self.fc(self.dropout(outputs)).permute(1,2,0)

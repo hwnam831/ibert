@@ -194,19 +194,19 @@ if __name__ == '__main__':
         model = Models.XLNetAE(dmodel, vocab_size = vocab_size, num_layers=num_layers, nhead=nhead).cuda()
     elif args.net == 'ibert':
         print('Executing Autoencoder model with IBERT\'s Architecture')
-        model = IBERT.IBERTAE(dmodel, vocab_size = vocab_size, num_layers=num_layers, nhead=nhead).cuda()
+        model = IBERT.IBERTAE(dmodel, vocab_size = vocab_size, num_layers=num_layers, nhead=nhead, bidirectional=args.bidirectional).cuda()
     elif args.net == 'ibertpos':
         print('Executing Autoencoder model with IBERT+Pos\'s Architecture')
-        model = IBERT.IBERTPosAE(dmodel, vocab_size = vocab_size, num_layers=num_layers, nhead=nhead).cuda()
+        model = IBERT.IBERTPosAE(dmodel, vocab_size = vocab_size, num_layers=num_layers, nhead=nhead, bidirectional=args.bidirectional).cuda()
     elif args.net == 'ibert2':
         print('Executing Autoencoder model with IBERT2\'s Architecture')
-        model = AMIBERT(dmodel, vocab_size = vocab_size, nhead=nhead, num_layers=num_layers).cuda()
+        model = AMIBERT(dmodel, vocab_size = vocab_size, nhead=nhead, num_layers=num_layers, bidirectional=args.bidirectional).cuda()
     elif args.net == 'gru':
         print('Executing Autoencoder model with GRU w.o. Attention')
         model = Models.GRUAE(dmodel, vocab_size = vocab_size).cuda()
     elif args.net == 'lstm':
         print('Executing Autoencoder model with LSTM including Attention')
-        model = IBERT.LSTMAE(dmodel, vocab_size = vocab_size).cuda()
+        model = IBERT.LSTMAE(dmodel, vocab_size = vocab_size, bidirectional=args.bidirectional).cuda()
     elif args.net == 'nam':
         print('Executing NAM Autoencoder model')
         model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=RecurrentAM).cuda()

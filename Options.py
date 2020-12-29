@@ -63,6 +63,8 @@ def get_args():
             choices= ['true', 'false'],
             default='false',
             help='Save result to file')
+    parser.add_argument('--unidirectional', dest='bidirectional', action='store_false')
+    parser.set_defaults(bidirectional=True)
     parser.add_argument(
             "--exp",
             type=int,
