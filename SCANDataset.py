@@ -73,7 +73,7 @@ class SCANDataset(Dataset):
         for word in self.dataset[index]['actions'].split(" "):
             target.append(action_dict[word])
     
-        return self.pad_sequences(target, self.maxSeq)
+        return self.padded_ids[index], self.pad_sequences(target, self.maxSeq)
 
     def __len__(self):
         
@@ -82,5 +82,5 @@ class SCANDataset(Dataset):
 
 if __name__ == '__main__':
     dataset = SCANDataset(splitType='train') # Use among 'train', 'test'
-    dataset.__getitem__(124) 
     loader = DataLoader(dataset, batch_size=4)
+    print(dataset.__getitem__(124) )
