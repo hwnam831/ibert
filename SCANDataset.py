@@ -22,6 +22,7 @@ class SCANDataset(Dataset):
     
     def __init__(self, maxSeq=64, dataType='length', splitType='train'):      
         
+        self.maxSeq = maxSeq
         self.dataset = load_dataset("scan", dataType, split=splitType) 
         self.wordtoix, self.ixtoword = defaultdict(str), defaultdict(int)
         self.textual_ids = self.build_dictionary()
@@ -35,7 +36,7 @@ class SCANDataset(Dataset):
         print(self.textual_ids[124])
         
         print("Pad to make every data share the same length")
-        self.padded_ids = [self.pad_sequences(x, maxSeq) for x in self.textual_ids]   
+        self.padded_ids = [self.pad_sequences(x, self.maxSeq) for x in self.textual_ids]   
         print(self.padded_ids[124])
 
     def pad_sequences(self, x, max_len):
@@ -67,11 +68,12 @@ class SCANDataset(Dataset):
   
     def __getitem__(self, index):
 
-        action_dict = {'I_TURN_RIGHT':0, 'I_JUMP':1, 'I_WALK':2, 'I_TURN_LEFT':3, 'I_RUN':4, 'I_LOOK':5}
+        action_dict = {'I_TURN_RIGHT':1, 'I_JUMP':2, 'I_WALK':3, 'I_TURN_LEFT':4, 'I_RUN':5, 'I_LOOK':6}
         target = list()
         for word in self.dataset[index]['actions'].split(" "):
             target.append(action_dict[word])
-        return target
+    
+        return self.pad_sequences(target, self.maxSeq)
 
     def __len__(self):
         
