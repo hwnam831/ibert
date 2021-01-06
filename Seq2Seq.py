@@ -6,6 +6,7 @@ from Options import get_args
 import Models
 from NSPDataset import NSPDatasetS2S, Token, fib, arith, palindrome
 from torch.utils.data import Dataset, DataLoader
+from SCANDataset import SCANDataset
 
 def train(model, trainloader, criterion, optimizer, scheduler):
         model.train(mode=True)
@@ -73,9 +74,9 @@ if __name__ == '__main__':
     epoch = args.epochs
 
     model       = Models.TfS2S(args.model_size).cuda()
-    dataset     = NSPDatasetS2S(fib, args.digits, size=args.train_size)
-    valset      = NSPDatasetS2S(fib, args.digits+1, args.digits-1, size=args.validation_size)
-    trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
+    dataset = SCANDataset(splitType='train') # Use among 'train', 'test'
+    valset = SCANDataset(splitType='test') # Use among 'train', 'test'
+    trainloader = DataLoader(dataset, batch_size=args.batch_size, num_workers=4)
     valloader   = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
     optimizer   = torch.optim.Adam(model.parameters(), lr=1e-4)
     scheduler   = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.96)
