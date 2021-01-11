@@ -190,7 +190,7 @@ class GRUTFAE(nn.Module):
         return self.fc(out).permute(1,2,0)
 
 class IBERTAE(nn.Module):
-    def __init__(self, model_size=512, nhead=4, num_layers=12, vocab_size=16, dropout=0.1, bidirectional=bidirectional):
+    def __init__(self, model_size=512, nhead=4, num_layers=12, vocab_size=16, dropout=0.1, bidirectional=True):
         super().__init__()
         self.model_size=model_size
         self.vocab_size = vocab_size

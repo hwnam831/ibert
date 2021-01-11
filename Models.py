@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from Encoder import TFEncoder, CNNEncoder, XLNetEncoderLayer
 from Decoder import TFDecoder
-from reformer_pytorch import Reformer
 
 
 class TfS2S(nn.Module):
@@ -185,17 +184,3 @@ class LSTMAE(nn.Module):
         outputs, _ = self.attn(outputs, outputs)
         outputs, state = self.decoder(self.dropout(outputs))
         return self.fc(self.dropout(outputs)).permute(1,2,0)
-
-class ReformerAE(nn.Module):
-    def __init__(self, d_model=512, nhead=4, maxlen=256, num_layers=6, vocab_size=16):
-        super().__init__()
-        self.embed = nn.Embedding(vocab_size, d_model)
-        self.posembed = nn.Embedding(maxlen, d_model)
-        self.reformer = Reformer(dim=d_model, depth=num_layers, heads=nhead, max_seq_len=maxlen, lsh_dropout=0.1, causal=True)
-        self.fc = nn.Linear(d_model, vocab_size)
-    
-    def forward(self, input):
-        ipos = torch.arange(input.size(0), device=input.device)[:,None].expand(input.shape[:2])
-        src = self.embed(input) + self.posembed(ipos)
-        out = self.reformer(src) #reformer takes N,S,C input
-        return self.fc(out).permute(1,2,0)
