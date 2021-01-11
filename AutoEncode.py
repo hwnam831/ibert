@@ -15,6 +15,7 @@ from torch.utils.data import Dataset, DataLoader
 import time
 import math
 
+
 def train(model, trainloader, criterion, optimizer, scheduler):
         model.train(mode=True)
         tcorrect = 0
@@ -213,6 +214,9 @@ if __name__ == '__main__':
     elif args.net == 'linear':
         print('Executing Linear Attention Autoencoder model')
         model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=LinearAttention).cuda()
+    elif args.net == 'reformer':
+        print('Executing Reformer model')
+        model = Models.ReformerAE(dmodel, nhead=nhead, num_layers=num_layers, vocab_size = vocab_size).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()
