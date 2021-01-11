@@ -7,7 +7,7 @@ import Options
 import Models
 import IBERT
 import IBERT2
-from NSPDataset import NSPDatasetAE, NSPDatasetAE2, Token, fib, arith, palindrome, copy
+from NSPDataset import NSPDatasetAE, NSPDatasetAE2, StringDataset, Token, fib, arith, palindrome, copy
 from PTBCDataset import PTBCDataset
 from PTBWDataset import PTBWDataset
 from AttentionMatrix import AMEncoder, AMIBERT, LinearAttention, RecurrentAM
@@ -130,12 +130,9 @@ if __name__ == '__main__':
     elif args.seq_type == 'arith':
         dataset     = NSPDatasetAE2(arith, args.digits, size=args.train_size)
         valset      = NSPDatasetAE2(arith, args.digits+4, args.digits+1, size=args.validation_size)
-    elif args.seq_type == 'palin':
-        dataset     = NSPDatasetAE2(palindrome, args.digits, numbers=1, size=args.train_size)
-        valset      = NSPDatasetAE2(palindrome, args.digits+4, args.digits+1, numbers=1, size=args.validation_size)
-    elif args.seq_type == 'copy':
-        dataset     = NSPDatasetAE2(copy, args.digits, size=args.train_size)
-        valset      = NSPDatasetAE2(copy, args.digits+4, args.digits+1, size=args.validation_size)
+    elif args.seq_type == 'copy' or args.seq_type == 'palin':
+        dataset     = StringDataset(args.seq_type, args.digits, size=args.train_size)
+        valset      = StringDataset(args.seq_type, args.digits+4, args.digits+1, size=args.validation_size)
     elif args.seq_type == 'ptbc':
         dataset     = PTBCDataset('train', minSeq = 16, maxSeq = 192) 
         valset      = PTBCDataset('train', minSeq = 192, maxSeq = 224) 
@@ -214,9 +211,9 @@ if __name__ == '__main__':
     elif args.net == 'linear':
         print('Executing Linear Attention Autoencoder model')
         model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=LinearAttention).cuda()
-    elif args.net == 'reformer':
-        print('Executing Reformer model')
-        model = Models.ReformerAE(dmodel, nhead=nhead, num_layers=num_layers, vocab_size = vocab_size).cuda()
+    elif args.net == 'dnc':
+        print('Executing DNC model')
+        model = Models.DNCAE(dmodel, nhead, vocab_size=vocab_size).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()

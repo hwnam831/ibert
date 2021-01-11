@@ -12,7 +12,7 @@ def get_args():
     parser.add_argument(
             "--net",
             type=str,
-            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'ibert', 'ibertpos', 'ibert2', 'nam', 'linear'],
+            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'ibert', 'ibertpos', 'ibert2', 'nam', 'linear', 'dnc'],
             default='tf',
             help='network choices')
     parser.add_argument(
@@ -28,7 +28,7 @@ def get_args():
     parser.add_argument(
             "--validation_size",
             type=int,
-            default='1536',
+            default='2048',
             help='number of validation examples')
     parser.add_argument(
             "--batch_size",

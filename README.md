@@ -9,7 +9,7 @@
 - PyTorch >1.4
 - CUDA version: 10.2
 - cuDNN: 7 
-- NVIDIA-Docker: 2.2.2 (optional)
+- pytorch-dnc[https://github.com/ixaxaar/pytorch-dnc]
 
 Using NVIDIA-Docker is not mandatory, but we strongly recommend using NVIDIA-Docker pytorch version download from https://ngc.nvidia.com/catalog/containers/nvidia:pytorch
 
