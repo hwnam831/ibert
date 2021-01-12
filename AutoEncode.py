@@ -214,6 +214,9 @@ if __name__ == '__main__':
     elif args.net == 'dnc':
         print('Executing DNC model')
         model = Models.DNCAE(dmodel, nhead, vocab_size=vocab_size).cuda()
+    elif args.net == 'ut':
+        print('Executing Universal Transformer model')
+        model = Models.UTAE(dmodel, nhead, vocab_size=vocab_size).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()
