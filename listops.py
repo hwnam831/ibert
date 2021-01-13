@@ -82,6 +82,7 @@ def generate_tree(depth, max_depth, max_args, min_args=1):
   Returns:
     The root node of a tree structure.
   """
+  max_d = 1
   if depth < max_depth:
     r = random.random()
   else:
@@ -89,22 +90,24 @@ def generate_tree(depth, max_depth, max_args, min_args=1):
 
   if r > VALUE_P:
     value = random.choice(VALUES)
-    return value, 1
+    return value, 1, max_d+1
   else:
     length = 2
     num_values = random.randint(min_args+1, max_args)
     values = []
     for _ in range(num_values):
-      sub_t, sub_l = generate_tree(depth + 1, max_depth, max_args)
+      sub_t, sub_l, sub_d = generate_tree(depth + 1, max_depth, max_args, 
+        min_args=min_args)
       values.append(sub_t)
       length += sub_l
+      max_d = sub_d if sub_d > max_d else max_d
 
     op = random.choice(OPERATORS)
     t = (op, values[0])
     for value in values[1:]:
       t = (t, value)
     t = (t, END)
-  return t, length
+  return t, length, max_d+1
 
 
 def to_string(t, parens=True):
@@ -172,7 +175,7 @@ def main(argv):
   num_samples = FLAGS.num_train_samples
   print('Start creating training samples')
   while len(data) < num_samples:
-    tree, length = generate_tree(1, FLAGS.train_depth, FLAGS.train_args)
+    tree, length, _ = generate_tree(1, FLAGS.train_depth, FLAGS.train_args)
     if length > FLAGS.min_length and length < FLAGS.max_length:
       data.add(tree)
       if len(data) % 1000 == 0:
@@ -185,7 +188,7 @@ def main(argv):
 
   print('Start creating arg samples')
   while len(vdata) < FLAGS.num_valid_samples:
-    tree, length = generate_tree(1, FLAGS.train_depth, FLAGS.max_args, min_args=FLAGS.train_args)
+    tree, length, _ = generate_tree(1, FLAGS.train_depth, FLAGS.max_args, min_args=FLAGS.train_args)
     if length > FLAGS.min_length and length < FLAGS.max_length:
       vdata.add(tree)
       if len(vdata) % 1000 == 0:
@@ -200,8 +203,8 @@ def main(argv):
 
   print('Start creating depth samples')
   while len(tdata) < FLAGS.num_test_samples:
-    tree, length = generate_tree(1, FLAGS.max_depth, FLAGS.train_args)
-    if length > FLAGS.min_length and length < FLAGS.max_length:
+    tree, length, depth = generate_tree(1, FLAGS.max_depth, FLAGS.train_args)
+    if length > FLAGS.min_length and length < FLAGS.max_length and depth > FLAGS.train_depth:
       tdata.add(tree)
       if len(tdata) % 1000 == 0:
         #tf.logging.info('Processed {}'.format(len(data)))
