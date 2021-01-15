@@ -204,7 +204,7 @@ if __name__ == '__main__':
         model = Models.GRUAE(dmodel, vocab_size = vocab_size).cuda()
     elif args.net == 'lstm':
         print('Executing Autoencoder model with LSTM including Attention')
-        model = IBERT.LSTMAE(dmodel, vocab_size = vocab_size, bidirectional=args.bidirectional).cuda()
+        model = Models.LSTMAE(dmodel, vocab_size = vocab_size, bidirectional=args.bidirectional).cuda()
     elif args.net == 'nam':
         print('Executing NAM Autoencoder model')
         model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=RecurrentAM).cuda()

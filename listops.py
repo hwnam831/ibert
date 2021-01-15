@@ -27,7 +27,7 @@ flags.DEFINE_string(
     'task', default='basic',
     help='Name of task to create.')
 flags.DEFINE_integer(
-    'num_train_samples', default=25600,
+    'num_train_samples', default=12800,
     help=('Number of train samples.'))
 flags.DEFINE_integer(
     'num_valid_samples', default=2048,
@@ -48,7 +48,10 @@ flags.DEFINE_integer(
     'train_args', default=5,
     help=('maximum number of arguments per operator in training sequences.'))
 flags.DEFINE_integer(
-    'max_length', default=256,
+    'max_length', default=128,
+    help=('maximum length per sequence in training sequences.'))
+flags.DEFINE_integer(
+    'train_length', default=84,
     help=('maximum length per sequence in training sequences.'))
 flags.DEFINE_integer(
     'min_length', default=32,
@@ -157,7 +160,7 @@ def write_to_file(data, fp):
   #tf.logging.info('Writing {} samples to {}'.format(len(data), fp + '.tsv'))
   with open(fp + '.tsv', 'w+') as f:
     writer = csv.writer(f, delimiter='\t')
-    writer.writerow(['Source', 'Target'])
+    #writer.writerow(['Source', 'Target'])
     writer.writerows(data)
 
 
@@ -174,26 +177,32 @@ def main(argv):
 #      + FLAGS.num_test_samples + FLAGS.num_valid_samples
   num_samples = FLAGS.num_train_samples
   print('Start creating training samples')
+  maxlen = 0
   while len(data) < num_samples:
     tree, length, _ = generate_tree(1, FLAGS.train_depth, FLAGS.train_args)
-    if length > FLAGS.min_length and length < FLAGS.max_length:
+    if length > FLAGS.min_length and length < FLAGS.train_length:
       data.add(tree)
+      maxlen = max(length, maxlen)
       if len(data) % 1000 == 0:
         #tf.logging.info('Processed {}'.format(len(data)))
         print('Processed {}'.format(len(data)))
+  print('Max len: {}'.format(maxlen))
   train = []
   for example in data:
     train.append([to_string(example), to_value(example)])
   write_to_file(train, FLAGS.output_dir + '/{}_train'.format(FLAGS.task))
 
   print('Start creating arg samples')
+  maxlen = 0
   while len(vdata) < FLAGS.num_valid_samples:
     tree, length, _ = generate_tree(1, FLAGS.train_depth, FLAGS.max_args, min_args=FLAGS.train_args)
     if length > FLAGS.min_length and length < FLAGS.max_length:
       vdata.add(tree)
+      maxlen = max(length, maxlen)
       if len(vdata) % 1000 == 0:
         #tf.logging.info('Processed {}'.format(len(data)))
         print('Processed {}'.format(len(vdata)))
+  print('Max len: {}'.format(maxlen))
   val = []
   for example in vdata:
     val.append([to_string(example), to_value(example)])
@@ -202,13 +211,16 @@ def main(argv):
   #tf.logging.info('Finished running dataset construction')
 
   print('Start creating depth samples')
+  maxlen = 0
   while len(tdata) < FLAGS.num_test_samples:
     tree, length, depth = generate_tree(1, FLAGS.max_depth, FLAGS.train_args)
     if length > FLAGS.min_length and length < FLAGS.max_length and depth > FLAGS.train_depth:
       tdata.add(tree)
+      maxlen = max(length, maxlen)
       if len(tdata) % 1000 == 0:
         #tf.logging.info('Processed {}'.format(len(data)))
         print('Processed {}'.format(len(tdata)))
+  print('Max len: {}'.format(maxlen))
   test = []
   for example in tdata:
     test.append([to_string(example), to_value(example)])
