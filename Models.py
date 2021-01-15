@@ -190,11 +190,11 @@ class LSTMAE(nn.Module):
         self.embed = nn.Embedding(vocab_size, self.model_size)
         if bidirectional:
             assert model_size %2 == 0
-            self.encoder = nn.LSTM(self.model_size, self.model_size//2, num_layers=num_layers, bidirectional=True)
-            self.decoder = nn.LSTM(self.model_size, self.model_size//2, num_layers=num_layers, bidirectional=True)
+            self.encoder = nn.LSTM(self.model_size, self.model_size//2, num_layers=num_layers//2, bidirectional=True)
+            self.decoder = nn.LSTM(self.model_size, self.model_size//2, num_layers=num_layers//2, bidirectional=True)
         else:
-            self.encoder = nn.LSTM(self.model_size, self.model_size, num_layers=num_layers, bidirectional=False)
-            self.decoder = nn.LSTM(self.model_size, self.model_size, num_layers=num_layers, bidirectional=False)
+            self.encoder = nn.LSTM(self.model_size, self.model_size, num_layers=num_layers//2, bidirectional=False)
+            self.decoder = nn.LSTM(self.model_size, self.model_size, num_layers=num_layers//2, bidirectional=False)
         self.dropout = nn.Dropout(0.1)
         self.attn = AttentionLayer(model_size, model_size, model_size)
         self.fc = nn.Linear(model_size, vocab_size)

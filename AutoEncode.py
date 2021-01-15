@@ -213,10 +213,10 @@ if __name__ == '__main__':
         model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=LinearAttention).cuda()
     elif args.net == 'dnc':
         print('Executing DNC model')
-        model = Models.DNCAE(dmodel, nhead, vocab_size=vocab_size).cuda()
+        model = Models.DNCAE(dmodel, nhead, num_layers=num_layers, vocab_size=vocab_size).cuda()
     elif args.net == 'ut':
         print('Executing Universal Transformer model')
-        model = Models.UTAE(dmodel, nhead, vocab_size=vocab_size).cuda()
+        model = Models.UTAE(dmodel, nhead, num_layers=num_layers, vocab_size=vocab_size).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()
