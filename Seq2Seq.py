@@ -14,8 +14,8 @@ def train(model, trainloader, criterion, optimizer, scheduler):
         tlen     = 0
         tloss    = 0
         for x,y in trainloader:
-            xdata       = x.cuda()
-            ydata       = y.cuda()
+            xdata       = x.to(DEVICE)
+            ydata       = y.to(DEVICE)
             tgt         = torch.ones_like(ydata)*Token.start
             tgt[:,1:]   = ydata[:,:-1]
             optimizer.zero_grad()
@@ -68,12 +68,12 @@ def validate(model, valloader, args):
 
 if __name__ == '__main__':
     
+    DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu' 
     args = get_args()
 
-    print('Executing Seq2Seq model with TfS2S Model')
+    print('Executing Seq2Seq model with IBERTS2S Model')
     epoch = args.epochs
-
-    model       = Models.TfS2S(args.model_size).cuda()
+    model       = Models.IBERTS2S(args.model_size).to(DEVICE)
     dataset = SCANDataset(splitType='train') # Use among 'train', 'test'
     valset = SCANDataset(splitType='test') # Use among 'train', 'test'
     trainloader = DataLoader(dataset, batch_size=args.batch_size, num_workers=4)
