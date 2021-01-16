@@ -12,7 +12,7 @@ def get_args():
     parser.add_argument(
             "--net",
             type=str,
-            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'ibert', 'ibertpos', 'noor', 'lan', 'ibert2', 'bruno'],
+            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'ibert', 'ibertpos', 'ibert2', 'nam', 'linear', 'dnc', 'ut'],
             default='tf',
             help='network choices')
     parser.add_argument(
@@ -28,33 +28,24 @@ def get_args():
     parser.add_argument(
             "--validation_size",
             type=int,
-            default='1536',
+            default='2048',
             help='number of validation examples')
     parser.add_argument(
             "--batch_size",
             type=int,
-            default='32',
+            default='128',
             help='batch size')
     parser.add_argument(
             "--model_size",
-            type=int,
-            default='768',
-            help='internal channel dimension')
-    parser.add_argument(
-            "--num_heads",
-            type=int,
-            default='12',
-            help='number of heads in TF-based models')
+            type=str,
+            default='mini',
+            choices=['tiny','mini','small','medium','base','custom'],
+            help='Size of the model based on Google\'s bert configurations')
     parser.add_argument(
             "--digits",
             type=int,
-            default='12',
+            default='8',
             help='Max number of digits')
-    parser.add_argument(
-            "--num_layers",
-            type=int,
-            default='12',
-            help='Number of layers in the model')
     parser.add_argument(
             "--seq_type",
             type=str,
@@ -64,7 +55,7 @@ def get_args():
     parser.add_argument(
             "--lr",
             type=float,
-            default=3e-5,
+            default=2e-4,
             help='Default learning rate')
     parser.add_argument(
             "--log",
@@ -72,6 +63,8 @@ def get_args():
             choices= ['true', 'false'],
             default='false',
             help='Save result to file')
+    parser.add_argument('--unidirectional', dest='bidirectional', action='store_false')
+    parser.set_defaults(bidirectional=True)
     parser.add_argument(
             "--exp",
             type=int,

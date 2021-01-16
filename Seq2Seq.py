@@ -6,6 +6,7 @@ from Options import get_args
 import Models
 from NSPDataset import NSPDatasetS2S, Token, fib, arith, palindrome
 from torch.utils.data import Dataset, DataLoader
+from SCANDataset import SCANDataset
 
 def train(model, trainloader, criterion, optimizer, scheduler):
         model.train(mode=True)
@@ -13,8 +14,8 @@ def train(model, trainloader, criterion, optimizer, scheduler):
         tlen     = 0
         tloss    = 0
         for x,y in trainloader:
-            xdata       = x.cuda()
-            ydata       = y.cuda()
+            xdata       = x.to(DEVICE)
+            ydata       = y.to(DEVICE)
             tgt         = torch.ones_like(ydata)*Token.start
             tgt[:,1:]   = ydata[:,:-1]
             optimizer.zero_grad()
@@ -67,15 +68,48 @@ def validate(model, valloader, args):
 
 if __name__ == '__main__':
     
+    DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu' 
     args = get_args()
 
-    print('Executing Seq2Seq model with TfS2S Model')
-    epoch = args.epochs
+    if args.model_size == 'base':
+        dmodel = 768
+        nhead = 12
+        num_layers = 12
+    elif args.model_size == 'mini':
+        dmodel = 256
+        nhead = 4
+        num_layers = 4
+    elif args.model_size == 'small':
+        dmodel = 512
+        nhead = 8
+        num_layers = 4
+    elif args.model_size == 'medium':
+        dmodel = 512
+        nhead = 8
+        num_layers = 8
+    elif args.model_size == 'tiny':
+        dmodel = 128
+        nhead = 2
+        num_layers = 2
+    elif args.model_size == 'custom':
+        dmodel = 512
+        nhead = 4
+        num_layers = 4
+    else:
+        print('shouldnt be here')
+        exit(-1)
 
-    model       = Models.TfS2S(args.model_size).cuda()
-    dataset     = NSPDatasetS2S(fib, args.digits, size=args.train_size)
-    valset      = NSPDatasetS2S(fib, args.digits+1, args.digits-1, size=args.validation_size)
-    trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
+    print('Executing Seq2Seq model with IBERTS2S Model')
+    epoch = args.epochs
+    if args.net == 'ibert':
+        model       = Models.IBERTS2S(dmodel, nhead=nhead, num_layers=num_layers).to(DEVICE)
+    elif args.net == 'lstm':
+        model       = Models.LSTMS2S(dmodel, num_layers=num_layers).to(DEVICE)
+    else:
+        model       = Models.TfS2S(dmodel, nhead=nhead, num_layers=num_layers).to(DEVICE)
+    dataset = SCANDataset(splitType='train') # Use among 'train', 'test'
+    valset = SCANDataset(splitType='test') # Use among 'train', 'test'
+    trainloader = DataLoader(dataset, batch_size=args.batch_size, num_workers=4)
     valloader   = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
     optimizer   = torch.optim.Adam(model.parameters(), lr=1e-4)
     scheduler   = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.96)
