@@ -68,7 +68,7 @@ class Encoder(nn.Module):
     Refer Fig.1 in https://arxiv.org/pdf/1706.03762.pdf
     """
     def __init__(self, embedding_size, hidden_size, num_layers, num_heads, total_key_depth, total_value_depth,
-                 filter_size, max_length=100, input_dropout=0.0, layer_dropout=0.0, 
+                 filter_size, max_length=512, input_dropout=0.0, layer_dropout=0.0, 
                  attention_dropout=0.0, relu_dropout=0.0, use_mask=False, act=False):
         """
         Parameters:

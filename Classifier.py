@@ -157,7 +157,11 @@ if __name__ == '__main__':
             ydata       = y.cuda()
             optimizer.zero_grad()
             output      = model(xdata)
-            output = output[:,:,0] #First of N,C,S
+            if args.net == 'dnc':
+                output = output[:,:,-1]
+            else:
+                output = output[:,:,0] #First of N,C,S
+            
 
             loss        = criterion(output, ydata)
             loss.mean().backward()
