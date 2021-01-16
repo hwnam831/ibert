@@ -7,14 +7,17 @@ from dnc import DNC
 from models import UTransformer
 
 class TfS2S(nn.Module):
-    def __init__(self, model_size=512, maxlen=256):
+    def __init__(self, model_size=512, maxlen=256, nhead=4, num_layers=6, vocab_size = 16, tgt_vocab_size=16):
         super().__init__()
         self.model_size=model_size
         self.maxlen=maxlen
-        self.embedding = nn.Embedding(16, model_size)
+        self.embedding = nn.Embedding(vocab_size, model_size)
+        self.tgt_emb = nn.Embedding(tgt_vocab_size, model_size)
+            
         self.posembed = nn.Embedding(maxlen, model_size)
-        self.encoder = TFEncoder(model_size, nhead=2, num_layers=3)
-        self.decoder = TFDecoder(model_size, 16)
+        self.encoder = TFEncoder(model_size, nhead=nhead, num_layers=num_layers)
+        self.decoder = TFDecoder(model_size, tgt_vocab_size, nhead=nhead, num_layers=num_layers)
+        
     #Batch-first in (N,S), batch-first out (N,C,S)
     def forward(self, input, target):
         input2 = input.permute(1,0)
@@ -23,9 +26,62 @@ class TfS2S(nn.Module):
         tpos = torch.arange(target2.size(0), device=target.device)[:,None].expand(target2.shape)
 
         src = self.embedding(input2) + self.posembed(ipos)
-        tgt = self.embedding(target2)+ self.posembed(tpos)
+        tgt = self.tgt_emb(target2)+ self.posembed(tpos)
         memory = self.encoder(src)
         return self.decoder(tgt, memory).permute(1,2,0)
+    
+class IBERTS2S(nn.Module):
+    def __init__(self, model_size=512, maxlen=256, nhead=4, num_layers=6, vocab_size = 16, tgt_vocab_size=16):
+        super().__init__()
+        self.model_size=model_size
+        self.maxlen=maxlen
+        assert model_size%2 == 0
+        self.src_emb = self.embedding = nn.Sequential(
+            nn.Embedding(vocab_size, model_size),
+            nn.GRU(model_size, model_size//2, 1, bidirectional=True)
+        )
+        self.tgt_emb = self.embedding = nn.Sequential(
+            nn.Embedding(tgt_vocab_size, model_size),
+            nn.GRU(model_size, model_size//2, 1, bidirectional=True)
+        )
+        self.encoder = TFEncoder(model_size, nhead=nhead, num_layers=num_layers)
+        self.decoder = TFDecoder(model_size, tgt_vocab_size, nhead=nhead, num_layers=num_layers)
+        
+    #Batch-first in (N,S), batch-first out (N,C,S)
+    def forward(self, input, target):
+        input2 = input.permute(1,0)
+        target2 = target.permute(1,0)
+
+        src = self.src_emb(input2)[0]
+        tgt = self.tgt_emb(target2)[0]
+        memory = self.encoder(src)
+        return self.decoder(tgt, memory).permute(1,2,0)
+class LSTMS2S(nn.Module):
+    def __init__(self, model_size, num_layers=1, vocab_size=16, tgt_vocab_size=16, bidirectional=True):
+        super().__init__()
+        
+        self.model_size = model_size
+        self.embed = nn.Embedding(vocab_size, self.model_size)
+        self.tgt_emb = nn.Embedding(tgt_vocab_size, model_size)
+        assert num_layers > 1
+        if bidirectional:
+            assert model_size %2 == 0
+            self.encoder = nn.LSTM(self.model_size, self.model_size//2, num_layers=num_layers//2, bidirectional=True)
+            self.decoder = nn.LSTM(self.model_size, self.model_size, num_layers=num_layers//2, bidirectional=False)
+        else:
+            self.encoder = nn.LSTM(self.model_size, self.model_size, num_layers=num_layers//2, bidirectional=False)
+            self.decoder = nn.LSTM(self.model_size, self.model_size, num_layers=num_layers//2, bidirectional=False)
+        self.dropout = nn.Dropout(0.1)
+        self.attn = AttentionLayer(model_size, model_size, model_size)
+        self.fc = nn.Linear(model_size, tgt_vocab_size)
+
+    def forward(self, input, tgt):
+        outputs = self.dropout(self.embed(input.permute(1,0)))
+        outputs, state = self.encoder(outputs)
+        tgt_hid = self.tgt_emb(tgt.permute(1,0)) #N,S -> S,N,C
+        outputs, _ = self.attn(tgt_hid, outputs)
+        outputs, state = self.decoder(self.dropout(outputs))
+        return self.fc(self.dropout(outputs)).permute(1,2,0)
 
 class TfAE(nn.Module):
     def __init__(self, model_size=512, nhead=4, num_layers=6, maxlen=256, vocab_size=16):
@@ -188,6 +244,7 @@ class LSTMAE(nn.Module):
         
         self.model_size = model_size
         self.embed = nn.Embedding(vocab_size, self.model_size)
+        assert num_layers > 1
         if bidirectional:
             assert model_size %2 == 0
             self.encoder = nn.LSTM(self.model_size, self.model_size//2, num_layers=num_layers//2, bidirectional=True)

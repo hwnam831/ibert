@@ -3,12 +3,12 @@ import torch.nn as nn
 from NSPDataset import Token
 
 class TFDecoder(nn.Module):
-    def __init__(self, model_size=512, nhead=2, num_layers=3):
+    def __init__(self, model_size=512, tgt_vocab_size=16, nhead=2, num_layers=3):
         super().__init__()
         self.model_size=model_size
         self.declayer = nn.TransformerDecoderLayer(d_model=model_size, nhead=nhead)
         self.decoder = nn.TransformerDecoder(self.declayer, num_layers=num_layers)
-        self.fc = nn.Linear(model_size, 16)
+        self.fc = nn.Linear(model_size, tgt_vocab_size)
     #Seq-first in (S,N,C), batch-first out (N,C,S)
     def forward(self, target, memory):
         tmask = self.generate_square_subsequent_mask(target.size(0)).to(target.device)
