@@ -42,7 +42,7 @@ class IBERTS2S(nn.Module):
         )
         self.tgt_emb = self.embedding = nn.Sequential(
             nn.Embedding(tgt_vocab_size, model_size),
-            nn.GRU(model_size, model_size//2, 1, bidirectional=True)
+            nn.GRU(model_size, model_size, 1, bidirectional=False)
         )
         self.encoder = TFEncoder(model_size, nhead=nhead, num_layers=num_layers)
         self.decoder = TFDecoder(model_size, tgt_vocab_size, nhead=nhead, num_layers=num_layers)
