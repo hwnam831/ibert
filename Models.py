@@ -36,11 +36,11 @@ class IBERTS2S(nn.Module):
         self.model_size=model_size
         self.maxlen=maxlen
         assert model_size%2 == 0
-        self.src_emb = self.embedding = nn.Sequential(
+        self.src_emb = nn.Sequential(
             nn.Embedding(vocab_size, model_size),
             nn.GRU(model_size, model_size//2, 1, bidirectional=True)
         )
-        self.tgt_emb = self.embedding = nn.Sequential(
+        self.tgt_emb = nn.Sequential(
             nn.Embedding(tgt_vocab_size, model_size),
             nn.GRU(model_size, model_size, 1, bidirectional=False)
         )
@@ -303,6 +303,32 @@ class UTAE(nn.Module):
 
 
         return pos_emb
+
+    #Batch-first in (N,S), batch-first out (N,C,S)
+    def forward(self, input):
+        ipos = torch.arange(input.size(1), device=input.device)
+
+        freq_seq = torch.arange(0, self.model_size, 2.0, dtype=torch.float, device=input.device)
+        inv_freq = 1 / torch.pow(10000, (freq_seq / self.model_size))
+
+        #pos_emb = self.positional_embedding(ipos, inv_freq)
+        #src = self.cell(self.embedding(input) + pos_emb)[0] #N, S, C
+        src = self.cell(self.embedding(input))[0] #N, S, C
+        return self.fc(src).permute(0,2,1)
+
+class UTAE2(nn.Module):
+    def __init__(self, model_size=64, nhead=4, num_layers=2, vocab_size=16):
+        super().__init__()
+        self.model_size=model_size
+        self.vocab_size = vocab_size
+        assert model_size%2 == 0
+        self.embedding = nn.Sequential(
+                nn.Embedding(vocab_size, model_size),
+                nn.LSTM(model_size, model_size//2, 1, bidirectional=True)
+            )
+        self.cell = UTransformer.Encoder(model_size, model_size, num_layers, nhead, 
+            total_key_depth=model_size, total_value_depth=model_size, filter_size=model_size, layer_dropout=0.1)
+        self.fc = nn.Linear(model_size, vocab_size)
 
     #Batch-first in (N,S), batch-first out (N,C,S)
     def forward(self, input):

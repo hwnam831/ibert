@@ -12,7 +12,7 @@ def get_args():
     parser.add_argument(
             "--net",
             type=str,
-            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'ibert', 'ibertpos', 'ibert2', 'nam', 'linear', 'dnc', 'ut'],
+            choices=['tf', 'cnn', 'gru', 'lstm', 'xlnet', 'ibert', 'ibertpos', 'ibert2', 'nam', 'linear', 'dnc', 'ut', 'ut2'],
             default='tf',
             help='network choices')
     parser.add_argument(

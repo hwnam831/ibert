@@ -217,6 +217,9 @@ if __name__ == '__main__':
     elif args.net == 'ut':
         print('Executing Universal Transformer model')
         model = Models.UTAE(dmodel, nhead, num_layers=num_layers, vocab_size=vocab_size).cuda()
+    elif args.net == 'ut2':
+        print('Executing Universal Transformer 2 model')
+        model = Models.UTAE2(dmodel, nhead, num_layers=num_layers, vocab_size=vocab_size).cuda()
     else :
         print('Network {} not supported'.format(args.net))
         exit()
