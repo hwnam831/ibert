@@ -64,6 +64,7 @@ def get_args():
             default='false',
             help='Save result to file')
     parser.add_argument('--unidirectional', dest='bidirectional', action='store_false')
+    parser.add_argument('--tf32', dest='tf32', action='store_true')
     parser.set_defaults(bidirectional=True)
     parser.add_argument(
             "--exp",

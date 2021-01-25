@@ -123,6 +123,15 @@ def logger(args, timestamp, epoch, contents):
 if __name__ == '__main__':
     
     args = Options.get_args()
+    torch.backends.cuda.matmul.allow_tf32 = False
+    # The flag below controls whether to allow TF32 on cuDNN. This flag defaults to True.
+    torch.backends.cudnn.allow_tf32 = False
+    if args.tf32:
+        print("TF32 computation enabled")
+        # The flag below controls whether to allow TF32 on matmul. This flag defaults to True.
+        torch.backends.cuda.matmul.allow_tf32 = True
+        # The flag below controls whether to allow TF32 on cuDNN. This flag defaults to True.
+        torch.backends.cudnn.allow_tf32 = True
 
     if args.seq_type == 'fib':
         dataset     = NSPDatasetAE2(fib, args.digits, size=args.train_size)
@@ -213,7 +222,7 @@ if __name__ == '__main__':
         model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=LinearAttention).cuda()
     elif args.net == 'dnc':
         print('Executing DNC model')
-        model = Models.DNCAE(dmodel, nhead, num_layers=num_layers, vocab_size=vocab_size).cuda()
+        model = Models.DNCAE(128, 4, num_layers=1, vocab_size=vocab_size).cuda()
     elif args.net == 'ut':
         print('Executing Universal Transformer model')
         model = Models.UTAE(dmodel, nhead, num_layers=num_layers, vocab_size=vocab_size).cuda()
