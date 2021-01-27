@@ -190,15 +190,21 @@ class GRUTFAE(nn.Module):
         return self.fc(out).permute(1,2,0)
 
 class IBERTAE(nn.Module):
-    def __init__(self, model_size=512, nhead=4, num_layers=12, vocab_size=16, dropout=0.1):
+    def __init__(self, model_size=512, nhead=4, num_layers=12, vocab_size=16, dropout=0.1, bidirectional=True):
         super().__init__()
         self.model_size=model_size
         self.vocab_size = vocab_size
-        assert model_size % 2 == 0
-        self.embedding = nn.Sequential(
-            nn.Embedding(vocab_size, model_size),
-            nn.LSTM(model_size, model_size//2, 1, bidirectional=True)
-        )
+        if bidirectional:
+            assert model_size % 2 == 0
+            self.embedding = nn.Sequential(
+                nn.Embedding(vocab_size, model_size),
+                nn.LSTM(model_size, model_size//2, 1, bidirectional=True)
+            )
+        else:
+            self.embedding = nn.Sequential(
+                nn.Embedding(vocab_size, model_size),
+                nn.LSTM(model_size, model_size, 1, bidirectional=False)
+            )
         self.dropout = nn.Dropout(dropout)
         self.norm = nn.LayerNorm(model_size)
         self.tfmodel = nn.TransformerEncoder(nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout), \

@@ -96,8 +96,8 @@ class NSPDatasetAE(Dataset):
     def __getitem__(self, idx):
         if not self.iscreated[idx]:
             ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
-            seed1 = np.random.randint(1, 10**ndigits)
-            seed2 = np.random.randint(max(seed1,10**(ndigits-1)), 10**ndigits)
+            seed1 = np.random.randint(1, 10**ndigits, dtype=np.int64)
+            seed2 = np.random.randint(max(seed1,10**(ndigits-1)), 10**ndigits, dtype=np.int64)
             seq, target = self.rule(seed1, seed2, self.numbers)
             pos = 1
             self.inputs[idx][0][Token.delim] = 1
@@ -148,9 +148,9 @@ class NSPDatasetAE2(Dataset):
     def __getitem__(self, idx):
         if not self.iscreated[idx]:
             ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
-            s1digits = np.random.randint(1, ndigits+1)
-            seed1 = np.random.randint(1, (10**s1digits)-1)
-            seed2 = np.random.randint(10**(ndigits-1), 10**ndigits)
+            s1digits = np.random.randint(1, ndigits+1, dtype=np.int64)
+            seed1 = np.random.randint(1, (10**s1digits)-1, dtype=np.int64)
+            seed2 = np.random.randint(10**(ndigits-1), 10**ndigits, dtype=np.int64)
             seq, target = self.rule(seed1, seed2, self.numbers)
             pos = 1
             self.inputs[idx][0] = Token.delim
@@ -173,7 +173,7 @@ class NSPDatasetAE2(Dataset):
             self.targets[idx][pos+len(y)] = Token.eos
 
             if pos+len(y)+1 < self.maxlen:
-                shift = np.random.randint(0, self.maxlen-pos-len(y)-1)
+                shift = np.random.randint(0, self.maxlen-pos-len(y)-1, dtype=np.int64)
                 curinput = self.inputs[idx][:pos+len(y)+1].copy()
                 curtarget = self.targets[idx][:pos+len(y)+1].copy()
                 self.inputs[idx][:shift] = Token.pad
@@ -207,8 +207,8 @@ class NSPDatasetS2S(Dataset):
     def __getitem__(self, idx):
         if not self.iscreated[idx]:
             ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
-            seed1 = np.random.randint(10**(ndigits-1), 10**ndigits)
-            seed2 = np.random.randint(10**(ndigits-1), 10**ndigits)
+            seed1 = np.random.randint(10**(ndigits-1), 10**ndigits, dtype=np.int64)
+            seed2 = np.random.randint(10**(ndigits-1), 10**ndigits, dtype=np.int64)
             seq, target = self.rule(seed1, seed2, self.numbers)
             pos = 1
             self.inputs[idx][0] = Token.delim
@@ -221,6 +221,53 @@ class NSPDatasetS2S(Dataset):
             self.targets[idx][:ndigits] = num2vec(target, ndigits, self.lendian)            
             self.iscreated[idx] = True
         return self.inputs[idx], self.targets[idx]
+
+#exclusive for copy and palindrome datasets
+class StringDataset(Dataset):
+    def __init__(self, rule, maxdigits, mindigits=1, size=25600):
+        assert rule in ['copy', 'palin']
+        self.reverse = rule == 'palin'
+        assert maxdigits > mindigits
+        self.maxdigits = maxdigits
+        self.mindigits = mindigits
+        self.size = size
+        self.maxlen = (maxdigits+1)*(2) + 1
+        self.inputs = np.ones([size, self.maxlen], dtype=np.int64)*Token.pad
+        self.targets = np.ones([size, self.maxlen], dtype=np.int64)*Token.pad
+        self.iscreated = [False for i in range(size)]
+
+    def __len__(self):
+        return self.size
+
+    def __getitem__(self, idx):
+        if not self.iscreated[idx]:
+            ndigits = ((self.maxdigits-self.mindigits+1)*idx)//self.size + self.mindigits
+            seq = np.random.randint(0, 10, [ndigits], dtype=np.int64)
+            
+            ans = seq[::-1] if self.reverse else seq
+            #random shift
+            pos = np.random.randint(1, self.maxlen - 2*ndigits - 1)
+            
+            self.inputs[idx][pos-1] = Token.delim
+            self.targets[idx][pos-1] = Token.delim
+            
+            self.inputs[idx][pos:pos+ndigits] = seq
+            self.targets[idx][pos:pos+ndigits] = seq
+            
+            self.inputs[idx][pos+ndigits] = Token.delim
+            self.targets[idx][pos+ndigits] = Token.delim
+
+            pos = pos + ndigits + 1
+            self.inputs[idx][pos:pos+ndigits] = ans
+            self.targets[idx][pos:pos+ndigits] = Token.mask
+            
+            self.inputs[idx][pos+ndigits] = Token.eos
+            self.targets[idx][pos+ndigits] = Token.eos
+            
+            self.iscreated[idx] = True
+
+        return self.inputs[idx], self.targets[idx]
+
 def printseq(x,y):
     tokenmap = ['0','1','2','3','4','5','6','7','8','9','_',' ','S','E','M','C']
     print("input:")
