@@ -14,7 +14,7 @@ from AttentionMatrix import AMEncoder, AMIBERT, LinearAttention, RecurrentAM
 from torch.utils.data import Dataset, DataLoader
 import time
 import math
-
+from utils import log_parameter
 
 def train(model, trainloader, criterion, optimizer, scheduler):
         model.train(mode=True)
@@ -234,6 +234,7 @@ if __name__ == '__main__':
         exit()
     print(model)
 
+    #log_parameter()
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     valloader   = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
     optimizer   = torch.optim.Adam(model.parameters(), lr=args.lr)
