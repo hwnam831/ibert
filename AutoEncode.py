@@ -234,7 +234,7 @@ if __name__ == '__main__':
         exit()
     print(model)
 
-    #log_parameter()
+    #log_parameter(model, args)
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     valloader   = DataLoader(valset, batch_size=args.batch_size, num_workers=2)
     optimizer   = torch.optim.Adam(model.parameters(), lr=args.lr)
