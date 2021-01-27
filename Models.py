@@ -6,11 +6,11 @@ from Decoder import TFDecoder, FCDecoder
 from IBERT import IBERTAE
 
 class TfS2S(nn.Module):
-    def __init__(self, model_size=512, maxlen=256):
+    def __init__(self, model_size=512, maxlen=256, vocab_size = 16):
         super().__init__()
         self.model_size=model_size
         self.maxlen=maxlen
-        self.embedding = nn.Embedding(16, model_size)
+        self.embedding = nn.Embedding(vocab_size, model_size)
         self.posembed = nn.Embedding(maxlen, model_size)
         self.encoder = TFEncoder(model_size, nhead=2, num_layers=3)
         self.decoder = TFDecoder(model_size, 16)
@@ -28,32 +28,31 @@ class TfS2S(nn.Module):
         return self.decoder(tgt, memory).permute(1,2,0)
     
 class IBERTS2S(nn.Module):
-    def __init__(self, model_size=512, maxlen=256, nhead=4, num_layers=12, vocab_size=16, dropout=.1):
+    def __init__(self, model_size=512, maxlen=256, vocab_size = 16, tgt_vocab_size=16):
         super().__init__()
         self.model_size=model_size
         self.maxlen=maxlen
-        # self.embedding = nn.Embedding(16, model_size)
-        self.embedding = nn.Sequential(
+        assert model_size%2 == 0
+        self.src_emb = self.embedding = nn.Sequential(
             nn.Embedding(vocab_size, model_size),
-            nn.LSTM(model_size, model_size//2, 1, bidirectional=True)
+            nn.GRU(model_size, model_size//2, 1, bidirectional=True)
         )
-        # self.encoder = IBERTAE(model_size, nhead=2, num_layers=3)
-        self.dropout = nn.Dropout(dropout)
-        self.norm = nn.LayerNorm(model_size)
-        self.tfmodel = nn.TransformerEncoder(nn.TransformerEncoderLayer(d_model=model_size, nhead=nhead, dropout=dropout), \
-            num_layers=num_layers, norm=nn.LayerNorm(model_size))
-        self.decoder = FCDecoder(model_size)
+        self.tgt_emb = self.embedding = nn.Sequential(
+            nn.Embedding(tgt_vocab_size, model_size),
+            nn.GRU(model_size, model_size//2, 1, bidirectional=True)
+        )
+        self.encoder = TFEncoder(model_size, nhead=2, num_layers=3)
+        self.decoder = TFDecoder(model_size, tgt_vocab_size)
         
     #Batch-first in (N,S), batch-first out (N,C,S)
     def forward(self, input, target):
         input2 = input.permute(1,0)
         target2 = target.permute(1,0)
 
-        src = self.embedding(input.permute(1,0))[0]
-        tgt = self.embedding(target2)
-        src = self.norm(src)
-        memory = self.tfmodel(self.dropout(src))
-        return self.decoder(memory).permute(1,2,0)
+        src = self.src_emb(input2)[0]
+        tgt = self.tgt_emb(target2)[0]
+        memory = self.encoder(src)
+        return self.decoder(tgt, memory).permute(1,2,0)
 
 class TfAE(nn.Module):
     def __init__(self, model_size=512, nhead=4, num_layers=6, maxlen=256, vocab_size=16):
