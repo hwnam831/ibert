@@ -38,7 +38,7 @@ def get_args():
     parser.add_argument(
             "--model_size",
             type=str,
-            default='mini',
+            default='base',
             choices=['tiny','mini','small','medium','base','custom'],
             help='Size of the model based on Google\'s bert configurations')
     parser.add_argument(
