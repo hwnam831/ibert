@@ -339,5 +339,5 @@ class UTAE2(nn.Module):
 
         #pos_emb = self.positional_embedding(ipos, inv_freq)
         #src = self.cell(self.embedding(input) + pos_emb)[0] #N, S, C
-        src = self.cell(self.embedding(input))[0] #N, S, C
+        src = self.cell(self.embedding(input)[0])[0] #N, S, C
         return self.fc(src).permute(0,2,1)

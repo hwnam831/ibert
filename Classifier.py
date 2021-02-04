@@ -68,7 +68,7 @@ if __name__ == '__main__':
         torch.backends.cudnn.allow_tf32 = True
     dataset = ListopsDataset('output_dir/basic_train.tsv')
     valset = ListopsDataset('output_dir/basic_args.tsv')
-
+    depthset = ListopsDataset('output_dir/basic_depth.tsv')
     vocab_size = dataset.vocab_size
 
     if args.model_size == 'base':
@@ -145,6 +145,7 @@ if __name__ == '__main__':
 
     trainloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     valloader   = DataLoader(valset, batch_size=args.batch_size*2, num_workers=2)
+    testloader   = DataLoader(depthset, batch_size=args.batch_size*2, num_workers=2)
     optimizer   = torch.optim.Adam(model.parameters(), lr=args.lr)
     scheduler   = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.97)
     criterion   = nn.CrossEntropyLoss(reduction='none')
@@ -208,6 +209,26 @@ if __name__ == '__main__':
                 vcorrect    = vcorrect + seqcorrect.sum().item()
                 vlen        = vlen + len(seqcorrect)
 
-        print('\nValidation seq acc:\t'+str(vcorrect/vlen))
+        print('\nArg set seq acc:\t'+str(vcorrect/vlen))
+        print('Validation loss:\t{}'.format(vloss/len(valloader)))
+        
+        vcorrect = 0
+        vlen     = 0
+        vloss    = 0
+        with torch.no_grad():
+            for x,y in testloader:
+                xdata       = x.cuda()
+                ydata       = y.cuda()
+                output      = model(xdata)[:,:,0] #First of N,C,S
+
+                loss        = criterion(output, ydata)
+                vloss       = vloss + loss.mean().item()
+                
+                pred        = output.argmax(axis=1)
+                seqcorrect  = (pred==ydata)
+                vcorrect    = vcorrect + seqcorrect.sum().item()
+                vlen        = vlen + len(seqcorrect)
+
+        print('\nDepth set seq acc:\t'+str(vcorrect/vlen))
         print('Validation loss:\t{}'.format(vloss/len(valloader)))
     
