@@ -6,11 +6,9 @@ import argparse
 import Options
 import Models
 import IBERT
-import IBERT2
 from NSPDataset import NSPDatasetAE, NSPDatasetAE2, StringDataset, Token, fib, arith, palindrome, copy
 from PTBCDataset import PTBCDataset
 from PTBWDataset import PTBWDataset
-from AttentionMatrix import AMEncoder, AMIBERT, LinearAttention, RecurrentAM
 from torch.utils.data import Dataset, DataLoader
 import time
 import math

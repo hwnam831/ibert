@@ -8,7 +8,7 @@ import argparse
 
 def get_args():
     """Get all the args"""
-    parser = argparse.ArgumentParser(description="CS546 Project: Trasnformer Generalization to Arbitary Context Lengths")
+    parser = argparse.ArgumentParser(description="Inductive Zero-shot Learning using Transformer with a Recurrent Layer")
     parser.add_argument(
             "--net",
             type=str,
