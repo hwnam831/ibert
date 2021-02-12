@@ -140,7 +140,7 @@ To reproduce the same experiment result as in I-BERT, please use the following c
 ```
 
 
-### Result Analysis (Autoencode.py)
+### Result Analysis (AutoEncode.py)
 
 -----
 
