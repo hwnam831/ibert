@@ -20,7 +20,7 @@ While I-BERT does not require strict hardware requirements, your GPU must suppor
 
 #### 3. Installation
 
-Clone our repository, then run the codes below for installation. Our repository will be available to the public once the paper review process completes.
+Clone our repository, then run the codes below for installation. Our repository will be available to the public once the paper review process is completed.
 
 ```
 # Create necessary directories
@@ -140,7 +140,7 @@ To reproduce the same experiment result as in I-BERT, please use the following c
 ```
 
 
-### Result Analysis
+### Result Analysis (Autoencode.py)
 
 -----
 
@@ -154,4 +154,4 @@ If you choose to log the experiment results, they will be saved in the directory
 - 2020-05-23 refers to `year-month-date`
 - 04/25/16 shows the `hour/min/sec` when the program is executed for the first time. 
 - `fib` is the dataset used for the experiment produced by `--seq_type <dataset> ` where `<dataset>` can be among `fib, copy, palin, ptbc, ptbw` 
-- `ibert` is the model used for the experiment produced by `--net <model>` where `<model>` can be among `ibert, xlnet, lstm, tf, ibertpos, ibert2`.
+- `ibert` is the model used for the experiment produced by `--net <model>` where `<model>` can be among `ibert, xlnet, lstm, tf, ibertpos, ibert2, tf, dnc`.
