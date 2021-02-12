@@ -16,7 +16,7 @@ Using NVIDIA-Docker is not mandatory, but we strongly recommend using NVIDIA-Doc
 
 - Nvidia GPU with CUDA Capability<br>
 
-  While I-BERT does not require strict hardware requirements, your GPU must support CUDA which enables faster computation. If you would like to reproduce the same data of sequences per second as in the paper, use TitanV as indicated above. 
+While I-BERT does not require strict hardware requirements, your GPU must support CUDA which enables faster computation. If you would like to reproduce the same data of sequences per second as in the paper, use TitanV as indicated above. 
 
 #### 3. Installation
 
