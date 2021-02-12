@@ -72,7 +72,7 @@ The program will be automatically terminated after training/validating 50 epochs
 
 Our program supports multiple command-line options to provide a better user experience. The below table shows major options that can be simply appended when running the program.
 
-### Number Sequence Dataset, Penn Tree Bank Dataset
+#### Number Sequence Dataset, Penn Tree Bank Dataset
 
 | Options      | Default | Description                                                  |
 | ------------ | ------- | ------------------------------------------------------------ |
@@ -94,7 +94,7 @@ python3 AutoEncode.py --net ibert --seq_type ptbw --epochs 100
 
 
 
-### Listops Dataset
+#### Listops Dataset
 
 | Options      | Default | Description                                                  |
 | ------------ | ------- | ------------------------------------------------------------ |
