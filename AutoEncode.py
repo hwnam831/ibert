@@ -212,12 +212,6 @@ if __name__ == '__main__':
     elif args.net == 'lstm':
         print('Executing Autoencoder model with LSTM including Attention')
         model = Models.LSTMAE(dmodel, vocab_size = vocab_size, num_layers=num_layers, bidirectional=args.bidirectional).cuda()
-    elif args.net == 'nam':
-        print('Executing NAM Autoencoder model')
-        model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=RecurrentAM).cuda()
-    elif args.net == 'linear':
-        print('Executing Linear Attention Autoencoder model')
-        model = AMEncoder(dmodel, nhead=nhead, num_layers=num_layers, vocab_size=vocab_size, attn=LinearAttention).cuda()
     elif args.net == 'dnc':
         print('Executing DNC model')
         model = Models.DNCAE(128, 4, num_layers=1, vocab_size=vocab_size).cuda()
