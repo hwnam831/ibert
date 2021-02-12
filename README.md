@@ -6,34 +6,32 @@
 
 - Python >3.6
 - Numpy >1.18
-- PyTorch >1.4
-- CUDA version: 10.2
-- cuDNN: 7 
+- PyTorch >1.7
+- CUDA
 - pytorch-dnc[https://github.com/ixaxaar/pytorch-dnc]
 
 Using NVIDIA-Docker is not mandatory, but we strongly recommend using NVIDIA-Docker pytorch version download from https://ngc.nvidia.com/catalog/containers/nvidia:pytorch
 
-#### 2. Hardware requirement (optional)
+#### 2. Hardware requirement
 
-- GPU: TitanV <br>
-  Driver Version: 440.33.01 <br>
-  vRAM: 12GB <br>
-- RAM: 32GB 
+- Nvidia GPU with CUDA Capability<br>
 
-While I-BERT does not require strict hardware requirements, your GPU must support CUDA which enables faster computation. If you would like to reproduce the same data of sequences per second as in the paper, use TitanV as indicated above. 
+  While I-BERT does not require strict hardware requirements, your GPU must support CUDA which enables faster computation. If you would like to reproduce the same data of sequences per second as in the paper, use TitanV as indicated above. 
 
+#### 3. Installation
 
-### Installation
+Clone our repository, then run the codes below for installation. Our repository will be available to the public once the paper review process completes.
 
------
-
-Please clone the program into your local work environment using the command provided below. 
-
-```{bash}
-git clone https://github.com/msharmaibert2/ibert.git
+```
+# Create necessary directories
+mkdir log
+mkdir output_dir
 ```
 
-After cloning the program, you should be able to find a folder name called  `ibert` where I-BERT is located.
+```
+# Generate listops dataset
+python listops.py
+```
 
 
 
@@ -74,11 +72,14 @@ The program will be automatically terminated after training/validating 50 epochs
 
 Our program supports multiple command-line options to provide a better user experience. The below table shows major options that can be simply appended when running the program.
 
+### Number Sequence Dataset, Penn Tree Bank Dataset
+
 | Options      | Default | Description                                                  |
 | ------------ | ------- | ------------------------------------------------------------ |
-| --net        | tf      | Model for your task <br>ibert: I-BERT <br>xlnet: XLNet<br>lstm: LSTM seq2seq <br>tf: BERT <br>ibertpos: I-BERT with positional encoding <br>ibert2: I-BERT2 |
+| --net        | tf      | Model for your task <br>ibert: I-BERT <br>xlnet: XLNet<br>lstm: LSTM seq2seq <br>tf: BERT <br>ibertpos: I-BERT with positional encoding <br>ibert2: I-BERT2<br>dnc: Differentiable Neural Computer<br>ut: Universal Transformer |
 | --seq_type   | fib     | task for prediction <br>fib: addition task (NSP Dataset)<br>copy: copy task (NSP Dataset)<br>palin: reverse task (NSP Dataset)<br>ptbc: Penn Tree Bank Character<br>ptbw: Penn Tree Bank Word |
 | --digits     | 12      | Max number of training digits <br>(Only supports for algorithmic tests) |
+| --model_size | 512     | Tiny: H=128 <br>Mini: H=256<br/>Small: H=512<br/>Base: H=768 |
 | --batch_size | 32      | Number of epochs                                             |
 | --epochs     | 50      | Number of epochs                                             |
 | --lr         | 3e-5    | Learning rate                                                |
@@ -89,6 +90,24 @@ For example, if we want to run a `Penn Tree Bank Word` dataset with 100 epochs w
 
 ```bash
 python3 AutoEncode.py --net ibert --seq_type ptbw --epochs 100
+```
+
+
+
+### Listops Dataset
+
+| Options      | Default | Description                                                  |
+| ------------ | ------- | ------------------------------------------------------------ |
+| --net        | tf      | Model for your task <br>ibert: I-BERT <br>xlnet: XLNet<br>lstm: LSTM seq2seq <br>tf: BERT <br>ibertpos: I-BERT with positional encoding <br>ibert2: I-BERT2<br>dnc: Differentiable Neural Computer<br>ut: Universal Transformer |
+| --model_size | 512     | Tiny: H=128 <br>Mini: H=256<br/>Small: H=512<br/>Base: H=768 |
+| --batch_size | 32      | Number of epochs                                             |
+| --epochs     | 50      | Number of epochs                                             |
+| --lr         | 3e-5    | Learning rate                                                |
+
+For example, if we want to run a `listops` dataset with 100 epochs with I-BERT, we can try the following: 
+
+```bash
+python3 Classifier.py --net ibert --model_size small
 ```
 
 
