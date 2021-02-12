@@ -78,14 +78,14 @@ python3 Classifier.py --net ibert --model_size small
 
 Our program supports multiple command-line options to provide a better user experience. The below table shows major options that can be simply appended when running the program.
 
-### Number Sequence Dataset, Penn Tree Bank Dataset (AutoEncode.py)
+#### Number Sequence Dataset, Penn Tree Bank Dataset (AutoEncode.py)
 
 | Options      | Default | Description                                                  |
 | ------------ | ------- | ------------------------------------------------------------ |
 | --net        | tf      | Model for your task <br>ibert: I-BERT <br>xlnet: XLNet<br>lstm: LSTM seq2seq <br>tf: BERT <br>ibertpos: I-BERT with positional encoding <br>ibert2: I-BERT2<br>dnc: Differentiable Neural Computer<br>ut: Universal Transformer |
 | --seq_type   | fib     | task for prediction <br>fib: addition task (NSP Dataset)<br>copy: copy task (NSP Dataset)<br>palin: reverse task (NSP Dataset)<br>ptbc: Penn Tree Bank Character<br>ptbw: Penn Tree Bank Word |
 | --digits     | 12      | Max number of training digits <br>(Only supports for algorithmic tests) |
-| --model_size | 512     | Tiny: H=128 <br>Mini: H=256<br/>Small: H=512<br/>Base: H=768 |
+| --model_size | 512     | Tiny: L=2 H=2 D=128 <br>Mini: L=4 H=4 D=256<br/>Small: L=4 H=4 D=512<br/>Medium: L=8 H=8 D=512 <br/>Base: L=12 H=12 D=768 |
 | --batch_size | 32      | Number of epochs                                             |
 | --epochs     | 50      | Number of epochs                                             |
 | --lr         | 3e-5    | Learning rate                                                |
@@ -100,12 +100,12 @@ python3 AutoEncode.py --net ibert --seq_type ptbw --epochs 100
 
 
 
-### Listops Dataset (Classifier.py)
+#### Listops Dataset (Classifier.py)
 
 | Options      | Default | Description                                                  |
 | ------------ | ------- | ------------------------------------------------------------ |
 | --net        | tf      | Model for your task <br>ibert: I-BERT <br>xlnet: XLNet<br>lstm: LSTM seq2seq <br>tf: BERT <br>ibertpos: I-BERT with positional encoding <br>ibert2: I-BERT2<br>dnc: Differentiable Neural Computer<br>ut: Universal Transformer |
-| --model_size | 512     | Tiny: H=128 <br>Mini: H=256<br/>Small: H=512<br/>Base: H=768 |
+| --model_size | 512     |Tiny: L=2 H=2 D=128 <br>Mini: L=4 H=4 D=256<br/>Small: L=4 H=4 D=512<br/>Medium: L=8 H=8 D=512 <br/>Base: L=12 H=12 D=768 |
 | --batch_size | 32      | Number of epochs                                             |
 | --epochs     | 50      | Number of epochs                                             |
 | --lr         | 3e-5    | Learning rate                                                |
