@@ -16,11 +16,9 @@ Using NVIDIA-Docker is not mandatory, but we strongly recommend using NVIDIA-Doc
 
 - Nvidia GPU with CUDA Capability<br>
 
-While I-BERT does not require strict hardware requirements, your GPU must support CUDA which enables faster computation. If you would like to reproduce the same data of sequences per second as in the paper, use TitanV as indicated above. 
-
 #### 3. Installation
 
-Clone our repository, then run the codes below for installation. Our repository will be available to the public once the paper review process is completed.
+Clone our repository, then run the codes below for installation. Our repository will be available to the public once the paper review process completes.
 
 ```
 # Create necessary directories
@@ -33,7 +31,11 @@ mkdir output_dir
 python listops.py
 ```
 
+Or, you can run the all-in-one script file
 
+```bash
+./run.sh
+```
 
 ### Running I-BERT
 
@@ -64,7 +66,11 @@ Perplexity :	3.2456890745652585
 
 The program will be automatically terminated after training/validating 50 epochs in the default setting.
 
+For `listops` dataset you need to run a different code: 
 
+```bash
+python3 Classifier.py --net ibert --model_size small
+```
 
 ### Options
 
@@ -72,7 +78,7 @@ The program will be automatically terminated after training/validating 50 epochs
 
 Our program supports multiple command-line options to provide a better user experience. The below table shows major options that can be simply appended when running the program.
 
-#### Number Sequence Dataset, Penn Tree Bank Dataset
+### Number Sequence Dataset, Penn Tree Bank Dataset (AutoEncode.py)
 
 | Options      | Default | Description                                                  |
 | ------------ | ------- | ------------------------------------------------------------ |
@@ -94,7 +100,7 @@ python3 AutoEncode.py --net ibert --seq_type ptbw --epochs 100
 
 
 
-#### Listops Dataset
+### Listops Dataset (Classifier.py)
 
 | Options      | Default | Description                                                  |
 | ------------ | ------- | ------------------------------------------------------------ |
@@ -103,13 +109,6 @@ python3 AutoEncode.py --net ibert --seq_type ptbw --epochs 100
 | --batch_size | 32      | Number of epochs                                             |
 | --epochs     | 50      | Number of epochs                                             |
 | --lr         | 3e-5    | Learning rate                                                |
-
-For example, if we want to run a `listops` dataset with 100 epochs with I-BERT, we can try the following: 
-
-```bash
-python3 Classifier.py --net ibert --model_size small
-```
-
 
 
 ### Sample result
@@ -133,14 +132,8 @@ validation loss:	0.055553702671507686
 Perplexity :	1.15058179827412
 ```
 
-To reproduce the same experiment result as in I-BERT, please use the following command. This command will run all the experiments used in the paper. Results will be automatically saved in directory `/log/`.
 
-```bash
-./run.sh
-```
-
-
-### Result Analysis 
+### Result Analysis
 
 -----
 
@@ -154,4 +147,4 @@ If you choose to log the experiment results, they will be saved in the directory
 - 2020-05-23 refers to `year-month-date`
 - 04/25/16 shows the `hour/min/sec` when the program is executed for the first time. 
 - `fib` is the dataset used for the experiment produced by `--seq_type <dataset> ` where `<dataset>` can be among `fib, copy, palin, ptbc, ptbw` 
-- `ibert` is the model used for the experiment produced by `--net <model>` where `<model>` can be among `ibert, xlnet, lstm, tf, ibertpos, ibert2, tf, dnc`.
+- `ibert` is the model used for the experiment produced by `--net <model>` where `<model>` can be among `ibert, xlnet, lstm, tf, ibertpos, ibert2`.
